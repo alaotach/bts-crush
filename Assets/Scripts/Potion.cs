@@ -5,10 +5,12 @@ using UnityEngine;
 public class Potion : MonoBehaviour
 {
 
-    public PotionType potionType;
+    public BTSCandyType candyType; // Changed from potionType
     public int xIndex;
     public int yIndex;
     public bool isMatched = false;
+    public bool isSpecialCandy = false; // Marks if this is a special candy (MicCandy, AlbumBomb, etc.)
+    public BTSCandyType baseColor = BTSCandyType.RM; // The "color" of this special candy (which member it can match with)
     private Vector2 currentPos;
     private Vector2 targetPos;
     public bool isMoving = false;
@@ -28,6 +30,17 @@ public class Potion : MonoBehaviour
     public void MoveToTarget(Vector2  _targetPos)
     {
         StartCoroutine(MoveRoutine(_targetPos));
+    }
+    
+    public void MoveToTarget(Vector2  _targetPos, float delay)
+    {
+        StartCoroutine(MoveRoutineWithDelay(_targetPos, delay));
+    }
+    
+    private IEnumerator MoveRoutineWithDelay(Vector2 _targetPos, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        yield return StartCoroutine(MoveRoutine(_targetPos));
     }
     private IEnumerator MoveRoutine(Vector2 _targetPos)
     {
@@ -49,11 +62,4 @@ public class Potion : MonoBehaviour
     }
 }
 
-public enum PotionType
-{
-    Red,
-    Blue,
-    Purple,
-    Green,
-    White
-}
+// PotionType enum removed - now using BTSCandyType instead

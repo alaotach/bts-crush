@@ -150,16 +150,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PotionBoard
   width: 6
   height: 8
-  potionSpacingX: 12
-  potionSpacingY: 12
-  boardOffset: {x: 0, y: -30}
-  potionParentScale: 4
+  potionSpacingX: 150
+  potionSpacingY: 150
+  autoFitToScreen: 1
+  spacingInPixels: 0
+  potionSize: 200
+  screenPaddingPercent: 0.1
+  manualBoardOffset: {x: 0, y: -50}
+  manualPotionParentScale: 1.2
+  boardOffset: {x: 0, y: -20}
+  potionParentScale: 0.55
+  autoAdjustForOrientation: 0
+  portraitScale: 0.8
+  portraitOffset: {x: 0, y: 80}
   potionPrefabs:
-  - {fileID: 8260276489928919788, guid: bd942fee81c43fd5db96e084e25c1624, type: 3}
-  - {fileID: 1273103266198776325, guid: 33461d7c6a3a0dbc78d4ffebd0ca77df, type: 3}
-  - {fileID: 4319037392579623186, guid: 0f067f17e7fbaead7a1d94131d5438ec, type: 3}
   - {fileID: 4149282586421448389, guid: e71d62882a863ea72915777149a303e7, type: 3}
-  - {fileID: 1184402528994659173, guid: d4c099e2aa4f10ca1a950a20959b2c88, type: 3}
+  allowInitialMatches: 1
+  candyDatabase: {fileID: 11400000, guid: 4970d06aa04306848ac9e2469bf0454e, type: 2}
+  specialCandyManager: {fileID: 0}
   potionBoardGO: {fileID: 117402821}
   potionsToDestroy: []
   potionParent: {fileID: 382953605}
@@ -221,8 +229,8 @@ RectTransform:
   m_GameObject: {fileID: 161149641}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 50}
-  m_LocalScale: {x: 0.42547, y: 0.4800498, z: 0.42547}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.04, y: 0.04, z: 0.04}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 785997682}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -702,8 +710,8 @@ Transform:
   m_GameObject: {fileID: 382953605}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -385.6896, y: -651.008, z: -890.0607}
-  m_LocalScale: {x: 47.954636, y: 47.954636, z: 47.954636}
+  m_LocalPosition: {x: -1096.1738, y: -1446.5, z: -1139}
+  m_LocalScale: {x: 134.86812, y: 111.23975, z: 61.516205}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 785997682}
@@ -879,7 +887,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 28, y: 13.699997}
+  m_AnchoredPosition: {x: 28, y: 13.700012}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &630815644
@@ -1329,7 +1337,7 @@ RectTransform:
   m_GameObject: {fileID: 977959638}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.99993604, y: 0.99993604, z: 0.99993604}
+  m_LocalScale: {x: 3.7928576, y: 3.7928576, z: 3.7928576}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 311255582}
@@ -1894,7 +1902,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 29.751762, y: -24.235214}
+  m_AnchoredPosition: {x: 29.75177, y: -24.235214}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1366188502
@@ -2023,15 +2031,15 @@ RectTransform:
   m_GameObject: {fileID: 1394712339}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2828, y: 1.5, z: 1.2828}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 785997682}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -32.750015}
-  m_SizeDelta: {x: 343.39587, y: 446.5}
+  m_AnchoredPosition: {x: -4, y: -19.009094}
+  m_SizeDelta: {x: 758.03, y: 803.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1394712341
 MonoBehaviour:
@@ -2106,10 +2114,10 @@ RectTransform:
   - {fileID: 1266179479}
   m_Father: {fileID: 785997682}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -376, y: 104.32001}
-  m_SizeDelta: {x: 255.7036, y: 208.6304}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -119}
+  m_SizeDelta: {x: 991.97, y: 208.63}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1429927487
 MonoBehaviour:
@@ -2317,7 +2325,7 @@ MonoBehaviour:
   backgroundPanel: {fileID: 1220004442}
   victoryPanel: {fileID: 1905906119}
   losePanel: {fileID: 977959638}
-  goal: 30
+  goal: 300
   moves: 10
   points: 0
   isGameEnded: 0
@@ -2504,7 +2512,7 @@ RectTransform:
   m_GameObject: {fileID: 1905906119}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3.7577, y: 3.7577, z: 3.7577}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1049869324}

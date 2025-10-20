@@ -30,7 +30,6 @@ public class GameManager : MonoBehaviour
     {
         instance = this;
         
-        // Hide all panels at start
         if (backgroundPanel != null) backgroundPanel.SetActive(false);
         if (victoryPanel != null) victoryPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
@@ -45,7 +44,6 @@ public class GameManager : MonoBehaviour
         isGameEnded = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (pointsText != null)
@@ -68,7 +66,6 @@ public class GameManager : MonoBehaviour
             isGameEnded = true;
             PotionBoard.Instance.ClearAllPotions(); // Clear the board when winning
             
-            // Calculate moves used
             int movesUsed = startingMoves - moves;
             if (victoryText != null)
             {
