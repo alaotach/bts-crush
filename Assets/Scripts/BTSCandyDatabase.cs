@@ -146,31 +146,31 @@ public class BTSCandyDatabase : ScriptableObject
     
     /// <summary>
     /// Determine what special candy to create based on match type
+    /// Simplified Candy Crush-style system
     /// </summary>
-    public BTSCandyType GetSpecialCandyForMatch(MatchType matchType, bool isVertical = false)
+    public BTSCandyType GetSpecialCandyForMatch(MatchType matchType)
     {
         switch (matchType)
         {
-            case MatchType.Row4:
-                return Random.value > 0.5f ? BTSCandyType.MicCandy : BTSCandyType.Lightstick;
+            case MatchType.Match4Horizontal:
+                // Horizontal 4-match creates VERTICAL striped candy (clears column)
+                return BTSCandyType.StripedVertical;
                 
-            case MatchType.Column4:
-                return Random.value > 0.5f ? BTSCandyType.MicCandy : BTSCandyType.Lightstick;
+            case MatchType.Match4Vertical:
+                // Vertical 4-match creates HORIZONTAL striped candy (clears row)
+                return BTSCandyType.StripedHorizontal;
                 
-            case MatchType.Row5Plus:
-            case MatchType.Column5Plus:
-                return Random.value > 0.5f ? BTSCandyType.AlbumBomb : BTSCandyType.StageBomb;
-                
+            case MatchType.TShape:
             case MatchType.LShape:
-            case MatchType.Square2x2:
-                // L or T shape creates Fan Heart Bomb
-                return BTSCandyType.FanHeartBomb;
+                // T or L shape creates Balloon (3x3 explosion)
+                return BTSCandyType.Balloon;
                 
-            case MatchType.Match6Plus:
-                return Random.value > 0.5f ? BTSCandyType.DynamiteCandy : BTSCandyType.ButterSlide;
+            case MatchType.Match5Plus:
+                // 5+ match creates Rainbow candy (universal)
+                return BTSCandyType.Rainbow;
                 
             default:
-                return BTSCandyType.RM; // Default to RM if no match
+                return BTSCandyType.RM; // Fallback (shouldn't happen)
         }
     }
 }

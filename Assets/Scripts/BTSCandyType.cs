@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>
 /// BTS-themed candy types for the match-3 game.
 /// Main candies are chibi BTS members, special candies from combos.
+/// Simplified system matching original Candy Crush mechanics.
 /// </summary>
 public enum BTSCandyType
 {
@@ -16,22 +17,14 @@ public enum BTSCandyType
     Jungkook,   // 전정국 - Blue/Purple chibi
     
     // === SPECIAL CANDIES (Created from matches) ===
+    // These keep the character's identity but have special effects
     
-    MicCandy,           // Shoots music notes in a line
-    Lightstick,         // ARMY Bomb beam across row/column
+    StripedHorizontal,  // Match-4 vertical → clears entire row (character with horizontal stripes)
+    StripedVertical,    // Match-4 horizontal → clears entire column (character with vertical stripes)
     
-    AlbumBomb,          // Clears all candies of one member (color bomb)
-    StageBomb,          // Clears X-shaped pattern with spotlights
+    Balloon,            // T or L shape → 3x3 explosion (character face on balloon)
     
-    FanHeartBomb,       // ARMY hearts explode outward 3x3
-    
-    DynamiteCandy,      // "Dy-na-na-na!" - Clears row + column
-    ButterSlide,        // "Smooth like butter" - Glides across board
-    
-    // === EASTER EGG / BONUS CANDIES ===
-    FanChant,           // ARMY hands wave, clears nearby
-    SugaRap,            // Rhythmic rap wave pattern
-    RMInspire           // RM wisdom - turns candies into specials
+    Rainbow             // Match-5+ → universal candy (galaxy/rainbow character)
 }
 
 /// <summary>
@@ -39,15 +32,12 @@ public enum BTSCandyType
 /// </summary>
 public enum MatchType
 {
-    Normal3,            // Regular 3-match
-    Row4,               // 4 in a row (horizontal)
-    Column4,            // 4 in a column (vertical)
-    Row5Plus,           // 5+ in a row
-    Column5Plus,        // 5+ in a column
-    LShape,             // L or T shape
-    Square2x2,          // 2x2 square
-    Match6Plus,         // 6 or more in any combination
-    SpecialShape        // Other special patterns
+    Normal3,            // Regular 3-match → no special candy
+    Match4Horizontal,   // 4 in a row (horizontal) → StripedVertical
+    Match4Vertical,     // 4 in a column (vertical) → StripedHorizontal
+    TShape,             // T shape → Balloon
+    LShape,             // L shape → Balloon
+    Match5Plus          // 5 or more → Rainbow
 }
 
 /// <summary>
@@ -67,6 +57,19 @@ public class BTSCandyData
     public int scoreValue = 10;
     public GameObject explosionEffect;
     public AudioClip activationSound;
+    
+    [Header("Directional Sprites (for striped candies)")]
+    [Tooltip("Sprite with horizontal stripes (for StripedHorizontal)")]
+    public Sprite horizontalStripedSprite;
+    
+    [Tooltip("Sprite with vertical stripes (for StripedVertical)")]
+    public Sprite verticalStripedSprite;
+    
+    [Tooltip("Balloon version sprite (for Balloon special)")]
+    public Sprite balloonSprite;
+    
+    [Tooltip("Rainbow/Galaxy version sprite (for Rainbow special)")]
+    public Sprite rainbowSprite;
     
     [Header("Clear Pattern")]
     public ClearPattern clearPattern;

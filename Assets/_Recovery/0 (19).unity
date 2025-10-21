@@ -129,8 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 117402823}
   - component: {fileID: 117402822}
-  - component: {fileID: 117402825}
-  - component: {fileID: 117402826}
   m_Layer: 0
   m_Name: Potion Board
   m_TagString: Untagged
@@ -169,7 +167,7 @@ MonoBehaviour:
   - {fileID: 4149282586421448389, guid: e71d62882a863ea72915777149a303e7, type: 3}
   allowInitialMatches: 1
   candyDatabase: {fileID: 11400000, guid: 4970d06aa04306848ac9e2469bf0454e, type: 2}
-  specialCandyManager: {fileID: 117402826}
+  specialCandyManager: {fileID: 0}
   potionBoardGO: {fileID: 117402821}
   potionsToDestroy: []
   potionParent: {fileID: 382953605}
@@ -204,93 +202,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &117402825
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 117402821}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
---- !u!114 &117402826
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 117402821}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c070419dd6a501bbbf79c381baa25fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BTSSpecialCandyManager
-  board: {fileID: 117402822}
-  candyDatabase: {fileID: 11400000, guid: 4970d06aa04306848ac9e2469bf0454e, type: 2}
-  musicNotesPrefab: {fileID: 0}
-  lightstickBeamPrefab: {fileID: 0}
-  albumBombExplosionPrefab: {fileID: 0}
-  stageLightsPrefab: {fileID: 0}
-  chibiExplosionPrefab: {fileID: 0}
-  fanChantPrefab: {fileID: 0}
-  dynamiteExplosionPrefab: {fileID: 0}
-  butterSlidePrefab: {fileID: 0}
-  megaBombPrefab: {fileID: 0}
-  micCandySound: {fileID: 0}
-  albumBombSound: {fileID: 0}
-  chibiExplosionSound: {fileID: 0}
-  dynamiteSound: {fileID: 0}
-  fanChantSound: {fileID: 0}
-  comboSound: {fileID: 0}
 --- !u!1 &161149641
 GameObject:
   m_ObjectHideFlags: 0
@@ -2392,8 +2303,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1535315015}
   - component: {fileID: 1535315014}
-  - component: {fileID: 1535315016}
-  - component: {fileID: 1535315017}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2417,7 +2326,7 @@ MonoBehaviour:
   victoryPanel: {fileID: 1905906119}
   losePanel: {fileID: 977959638}
   goal: 300
-  moves: 10
+  moves: 100
   points: 0
   isGameEnded: 0
   pointsText: {fileID: 1366188502}
@@ -2440,83 +2349,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &1535315016
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535315013}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
---- !u!114 &1535315017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535315013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e8416d45484c74431b1a8e1fcc992bcd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpecialCandyVisualizer
-  stripeColor: {r: 1, g: 1, b: 1, a: 0.7}
-  numberOfStripes: 4
-  stripeThickness: 0.15
-  balloonSprite: {fileID: 0}
-  balloonTint: {r: 1, g: 1, b: 1, a: 1}
-  animateRainbow: 1
-  rainbowSpeed: 1
 --- !u!1 &1663594076
 GameObject:
   m_ObjectHideFlags: 0

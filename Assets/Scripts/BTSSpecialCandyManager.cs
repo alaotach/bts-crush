@@ -35,19 +35,19 @@ public class BTSSpecialCandyManager : MonoBehaviour
     
     void Awake()
     {
-        audioSource = gameObject.AddComponent<AudioSource>();
-        audioSource.playOnAwake = false;
-    }
-    
-    /// <summary>
+        audioSource = GetComponent<AudioSource>();
+        Debug.Log("BTSSpecialCandyManager.cs successfully compiled and loaded!");
+    }    /// <summary>
     /// Activate a special candy at the given position
+    /// Simplified system matching original Candy Crush mechanics
     /// </summary>
     public IEnumerator ActivateSpecialCandy(BTSCandyType candyType, int x, int y, BTSCandyType targetColor = BTSCandyType.RM)
     {
         BTSCandyData candyData = candyDatabase.GetCandyData(candyType);
         
-        if (candyData == null || !candyData.isSpecial)
+        if (candyData == null)
         {
+            Debug.LogWarning($"No candy data found for {candyType}");
             yield break;
         }
         
@@ -57,7 +57,49 @@ public class BTSSpecialCandyManager : MonoBehaviour
             audioSource.PlayOneShot(candyData.activationSound);
         }
         
-        List<Vector2Int> candiesToClear = GetClearPattern(candyData.clearPattern, x, y, candyData.clearRadius, targetColor);
+        List<Vector2Int> candiesToClear = new List<Vector2Int>();
+        
+        // Determine clear pattern based on candy type
+        switch (candyType)
+        {
+            case BTSCandyType.StripedHorizontal:
+                // Clears entire row
+                candiesToClear = GetRowPattern(y);
+                Debug.Log($"⚡ StripedHorizontal activated: Clearing row {y}");
+                break;
+                
+            case BTSCandyType.StripedVertical:
+                // Clears entire column
+                candiesToClear = GetColumnPattern(x);
+                Debug.Log($"⚡ StripedVertical activated: Clearing column {x}");
+                break;
+                
+            case BTSCandyType.Balloon:
+                // Clears 3x3 area
+                candiesToClear = GetAreaPattern(x, y, 1);
+                Debug.Log($"🎈 Balloon activated: Clearing 3x3 area at ({x},{y})");
+                break;
+                
+            case BTSCandyType.Rainbow:
+                // Clears all candies of target color
+                if (targetColor.IsRegularMember())
+                {
+                    candiesToClear = GetAllOfColorPattern(targetColor);
+                    Debug.Log($"🌈 Rainbow activated: Clearing all {targetColor} candies");
+                }
+                else
+                {
+                    // If no target, clear a random color
+                    BTSCandyType randomColor = candyDatabase.GetRandomRegularCandy();
+                    candiesToClear = GetAllOfColorPattern(randomColor);
+                    Debug.Log($"🌈 Rainbow activated: Clearing all {randomColor} candies (random)");
+                }
+                break;
+                
+            default:
+                Debug.LogWarning($"Unknown special candy type: {candyType}");
+                yield break;
+        }
         
         // Spawn visual effect
         yield return StartCoroutine(SpawnEffectForCandy(candyType, x, y, candiesToClear));
@@ -240,6 +282,7 @@ public class BTSSpecialCandyManager : MonoBehaviour
     
     /// <summary>
     /// Spawn visual effects for special candy activation
+    /// Simplified system for new candy types
     /// </summary>
     private IEnumerator SpawnEffectForCandy(BTSCandyType candyType, int x, int y, List<Vector2Int> targets)
     {
@@ -247,20 +290,44 @@ public class BTSSpecialCandyManager : MonoBehaviour
         
         switch (candyType)
         {
-            case BTSCandyType.MicCandy:
-            case BTSCandyType.Lightstick:
-                yield return StartCoroutine(PlayMicOrLightstickEffect(worldPos, targets));
+            case BTSCandyType.StripedHorizontal:
+            case BTSCandyType.StripedVertical:
+                // Play line-clearing effect
+                if (lightstickBeamPrefab != null)
+                {
+                    Instantiate(lightstickBeamPrefab, worldPos, Quaternion.identity);
+                }
+                if (micCandySound != null)
+                {
+                    audioSource.PlayOneShot(micCandySound);
+                }
                 break;
                 
-            case BTSCandyType.AlbumBomb:
-            case BTSCandyType.StageBomb:
+            case BTSCandyType.Balloon:
+                // Play balloon pop effect
+                if (chibiExplosionPrefab != null)
+                {
+                    Instantiate(chibiExplosionPrefab, worldPos, Quaternion.identity);
+                }
+                if (chibiExplosionSound != null)
+                {
+                    audioSource.PlayOneShot(chibiExplosionSound);
+                }
+                break;
+                
+            case BTSCandyType.Rainbow:
+                // Play rainbow explosion effect
                 if (albumBombExplosionPrefab != null)
                 {
                     Instantiate(albumBombExplosionPrefab, worldPos, Quaternion.identity);
                 }
-                audioSource.PlayOneShot(albumBombSound);
+                if (albumBombSound != null)
+                {
+                    audioSource.PlayOneShot(albumBombSound);
+                }
                 break;
                 
+            // Regular member candies (shouldn't be activated as special, but just in case)
             case BTSCandyType.RM:
             case BTSCandyType.Jin:
             case BTSCandyType.Suga:
@@ -268,32 +335,14 @@ public class BTSSpecialCandyManager : MonoBehaviour
             case BTSCandyType.Jimin:
             case BTSCandyType.V:
             case BTSCandyType.Jungkook:
-            case BTSCandyType.FanHeartBomb:
                 if (chibiExplosionPrefab != null)
                 {
                     Instantiate(chibiExplosionPrefab, worldPos, Quaternion.identity);
                 }
-                audioSource.PlayOneShot(chibiExplosionSound);
-                break;
-                
-            case BTSCandyType.DynamiteCandy:
-                if (dynamiteExplosionPrefab != null)
+                if (chibiExplosionSound != null)
                 {
-                    Instantiate(dynamiteExplosionPrefab, worldPos, Quaternion.identity);
+                    audioSource.PlayOneShot(chibiExplosionSound);
                 }
-                audioSource.PlayOneShot(dynamiteSound);
-                break;
-                
-            case BTSCandyType.ButterSlide:
-                yield return StartCoroutine(PlayButterSlideEffect(worldPos, targets));
-                break;
-                
-            case BTSCandyType.FanChant:
-                if (fanChantPrefab != null)
-                {
-                    Instantiate(fanChantPrefab, worldPos, Quaternion.identity);
-                }
-                audioSource.PlayOneShot(fanChantSound);
                 break;
         }
         
@@ -349,22 +398,28 @@ public class BTSSpecialCandyManager : MonoBehaviour
     
     private IEnumerator ClearCandiesWithDelay(List<Vector2Int> positions)
     {
+        Debug.Log($"🔥 ClearCandiesWithDelay: Clearing {positions.Count} positions");
         foreach (var pos in positions)
         {
             if (board != null)
             {
+                Debug.Log($"   Clearing candy at ({pos.x}, {pos.y})");
                 board.ClearCandyAt(pos.x, pos.y);
             }
             yield return new WaitForSeconds(0.05f);
         }
+        Debug.Log($"✅ ClearCandiesWithDelay: Finished clearing all positions");
     }
     
     /// <summary>
     /// Handle combo when two special candies are combined
+    /// Simplified Candy Crush-style combo system
     /// </summary>
     public IEnumerator HandleSpecialCombo(BTSCandyType candy1, BTSCandyType candy2, int x, int y)
     {
         audioSource.PlayOneShot(comboSound);
+        
+        Debug.Log($"💥 COMBO: {candy1} + {candy2}");
         
         // Mega combo effect
         if (megaBombPrefab != null)
@@ -373,11 +428,138 @@ public class BTSSpecialCandyManager : MonoBehaviour
             Instantiate(megaBombPrefab, worldPos, Quaternion.identity);
         }
         
-        // Determine combo effect based on combination
-        // Mic + Chibi = Clear 3 rows and 3 columns
-        // Album + Lightstick = Clear all of 2 colors
-        // etc.
+        List<Vector2Int> candiesToClear = new List<Vector2Int>();
         
-        yield return new WaitForSeconds(1f);
+        // Determine combo effect based on combination
+        if (candy1 == BTSCandyType.Rainbow && candy2 == BTSCandyType.Rainbow)
+        {
+            // 🌈 + 🌈 = Clear ENTIRE BOARD!
+            Debug.Log("💫 RAINBOW + RAINBOW = MEGA BLAST! Clearing entire board!");
+            candiesToClear = GetEntireBoardPattern();
+        }
+        else if (candy1 == BTSCandyType.Rainbow || candy2 == BTSCandyType.Rainbow)
+        {
+            BTSCandyType otherCandy = (candy1 == BTSCandyType.Rainbow) ? candy2 : candy1;
+            
+            if (otherCandy == BTSCandyType.StripedHorizontal || otherCandy == BTSCandyType.StripedVertical)
+            {
+                // 🌈 + Striped = Turn all candies of a random color into striped and activate them all
+                Debug.Log("🌈 + ⚡ Striped = All candies of one color become striped!");
+                candiesToClear = TransformAndActivateStriped(otherCandy);
+            }
+            else if (otherCandy == BTSCandyType.Balloon)
+            {
+                // 🌈 + Balloon = Turn all candies of a random color into balloons and pop them all
+                Debug.Log("🌈 + 🎈 Balloon = All candies of one color become balloons!");
+                candiesToClear = TransformAndActivateBalloons();
+            }
+        }
+        else if ((candy1 == BTSCandyType.StripedHorizontal || candy1 == BTSCandyType.StripedVertical) &&
+                 (candy2 == BTSCandyType.StripedHorizontal || candy2 == BTSCandyType.StripedVertical))
+        {
+            // ⚡ + ⚡ Striped = Giant cross (clear row AND column)
+            Debug.Log("⚡ + ⚡ = Giant Cross Explosion!");
+            candiesToClear = GetCrossPattern(x, y);
+        }
+        else if ((candy1 == BTSCandyType.Balloon && (candy2 == BTSCandyType.StripedHorizontal || candy2 == BTSCandyType.StripedVertical)) ||
+                 (candy2 == BTSCandyType.Balloon && (candy1 == BTSCandyType.StripedHorizontal || candy1 == BTSCandyType.StripedVertical)))
+        {
+            // 🎈 + ⚡ Striped = Giant cross explosion
+            Debug.Log("🎈 + ⚡ = Giant Cross Explosion!");
+            candiesToClear = GetCrossPattern(x, y);
+        }
+        else if (candy1 == BTSCandyType.Balloon && candy2 == BTSCandyType.Balloon)
+        {
+            // 🎈 + 🎈 Balloon = Larger 5x5 explosion
+            Debug.Log("🎈 + 🎈 = Mega 5x5 Balloon Explosion!");
+            candiesToClear = GetAreaPattern(x, y, 2); // 5x5 area
+        }
+        
+        yield return StartCoroutine(ClearCandiesWithDelay(candiesToClear));
+        
+        yield return new WaitForSeconds(0.5f);
+    }
+    
+    /// <summary>
+    /// Get pattern for entire board (Rainbow + Rainbow combo)
+    /// </summary>
+    private List<Vector2Int> GetEntireBoardPattern()
+    {
+        List<Vector2Int> positions = new List<Vector2Int>();
+        for (int x = 0; x < board.width; x++)
+        {
+            for (int y = 0; y < board.height; y++)
+            {
+                positions.Add(new Vector2Int(x, y));
+            }
+        }
+        return positions;
+    }
+    
+    /// <summary>
+    /// Rainbow + Striped combo: Transform all candies of one color into striped candies
+    /// </summary>
+    private List<Vector2Int> TransformAndActivateStriped(BTSCandyType stripedType)
+    {
+        List<Vector2Int> positions = new List<Vector2Int>();
+        
+        // Pick a random color
+        BTSCandyType targetColor = candyDatabase.GetRandomRegularCandy();
+        
+        // Find all candies of that color and activate their rows/columns
+        for (int x = 0; x < board.width; x++)
+        {
+            for (int y = 0; y < board.height; y++)
+            {
+                if (board.potionBoard[x, y] != null && board.potionBoard[x, y].isUsable && board.potionBoard[x, y].potion != null)
+                {
+                    Potion potion = board.potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion.candyType == targetColor)
+                    {
+                        // Add either row or column
+                        if (stripedType == BTSCandyType.StripedHorizontal)
+                        {
+                            positions.AddRange(GetRowPattern(y));
+                        }
+                        else
+                        {
+                            positions.AddRange(GetColumnPattern(x));
+                        }
+                    }
+                }
+            }
+        }
+        
+        return positions;
+    }
+    
+    /// <summary>
+    /// Rainbow + Balloon combo: Transform all candies of one color into balloons
+    /// </summary>
+    private List<Vector2Int> TransformAndActivateBalloons()
+    {
+        List<Vector2Int> positions = new List<Vector2Int>();
+        
+        // Pick a random color
+        BTSCandyType targetColor = candyDatabase.GetRandomRegularCandy();
+        
+        // Find all candies of that color and create 3x3 explosions around them
+        for (int x = 0; x < board.width; x++)
+        {
+            for (int y = 0; y < board.height; y++)
+            {
+                if (board.potionBoard[x, y] != null && board.potionBoard[x, y].isUsable && board.potionBoard[x, y].potion != null)
+                {
+                    Potion potion = board.potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion.candyType == targetColor)
+                    {
+                        // Add 3x3 area around this position
+                        positions.AddRange(GetAreaPattern(x, y, 1));
+                    }
+                }
+            }
+        }
+        
+        return positions;
     }
 }

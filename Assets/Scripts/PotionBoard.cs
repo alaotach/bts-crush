@@ -96,6 +96,37 @@ public class PotionBoard : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+
+        // 🐲 ROBUST-FIX: Find the SpecialCandyManager
+        if (specialCandyManager == null)
+        {
+            Debug.LogWarning("SpecialCandyManager not assigned in Inspector. Searching...");
+            
+            // 1. Try to get it from this GameObject first.
+            specialCandyManager = GetComponent<BTSSpecialCandyManager>();
+            if (specialCandyManager != null)
+            {
+                Debug.Log("✓ Found BTSSpecialCandyManager on the same GameObject!");
+            }
+            else
+            {
+                // 2. If not on this GameObject, search the whole scene.
+                Debug.Log("Component not found on this object. Searching entire scene...");
+                specialCandyManager = FindObjectOfType<BTSSpecialCandyManager>();
+                if (specialCandyManager != null)
+                {
+                    Debug.Log($"✓ Found BTSSpecialCandyManager on a different object: {specialCandyManager.gameObject.name}");
+                }
+                else
+                {
+                    Debug.LogError("❌ CRITICAL: Could not find an active BTSSpecialCandyManager component anywhere in the scene!");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("✓ SpecialCandyManager was already assigned in the Inspector.");
+        }
         
         if (selectionIndicator != null)
         {
@@ -491,25 +522,25 @@ public class PotionBoard : MonoBehaviour
         switch (member)
         {
             case BTSCandyType.RM:
-                return new Color(1f, 0.8f, 1f, 1f); // Subtle purple tint
+                return new Color(1f, 0.5f, 1f, 1f); // Purple tint
                 
             case BTSCandyType.Jin:
-                return new Color(1f, 0.9f, 0.95f, 1f); // Subtle pink tint
+                return new Color(1f, 0.7f, 0.85f, 1f); // Pink tint
                 
             case BTSCandyType.Suga:
-                return new Color(0.95f, 0.95f, 0.95f, 1f); // Subtle gray tint
+                return new Color(0.8f, 0.8f, 0.8f, 1f); // Gray tint
                 
             case BTSCandyType.JHope:
-                return new Color(1f, 0.95f, 0.8f, 1f); // Subtle orange tint
+                return new Color(1f, 0.8f, 0.5f, 1f); // Orange tint
                 
             case BTSCandyType.Jimin:
-                return new Color(1f, 1f, 0.85f, 1f); // Subtle yellow tint
+                return new Color(1f, 1f, 0.6f, 1f); // Yellow tint
                 
             case BTSCandyType.V:
-                return new Color(0.85f, 1f, 0.9f, 1f); // Subtle green tint
+                return new Color(0.6f, 1f, 0.7f, 1f); // Green tint
                 
             case BTSCandyType.Jungkook:
-                return new Color(0.9f, 0.95f, 1f, 1f); // Subtle blue tint
+                return new Color(0.7f, 0.85f, 1f, 1f); // Blue tint
                 
             default:
                 return Color.white; // No tint
@@ -569,6 +600,7 @@ public class PotionBoard : MonoBehaviour
         
         if (isProcessingMove)
         {
+            Debug.Log("⛔ Input blocked: isProcessingMove = true");
             return;
         }
         
@@ -622,10 +654,19 @@ public class PotionBoard : MonoBehaviour
                     if (potionBoard[targetX, targetY] != null && potionBoard[targetX, targetY].isUsable && potionBoard[targetX, targetY].potion != null)
                     {
                         Potion targetPotion = potionBoard[targetX, targetY].potion.GetComponent<Potion>();
-                        if (targetPotion != null && dragStartPotion != null)
+                        
+                        // 🐲 CRITICAL FIX: Added adjacency check for drag-and-drop
+                        if (targetPotion != null && dragStartPotion != null && isAdjacent(dragStartPotion, targetPotion))
                         {
+                            Debug.Log($"🐲 Drag swap approved: {dragStartPotion.candyType} <=> {targetPotion.candyType}");
                             SwapPotion(dragStartPotion, targetPotion);
                         }
+                        else
+                        {
+                            Debug.Log($"❌ Drag swap blocked: Not adjacent or invalid target.");
+                        }
+                        
+                        // Stop processing this drag regardless of success
                         isDragging = false;
                         dragStartPotion = null;
                     }
@@ -1330,36 +1371,82 @@ public class PotionBoard : MonoBehaviour
 
     public IEnumerator ProcessTurnOnMatchedBoard(bool _subtractMoves)
     {
+        List<Potion> matchedSpecials = new();
+        List<Potion> regularMatches = new();
+
         foreach (Potion potion in potionsToRemove)
+        {
+            if (potion == null) continue;
+            potion.isMatched = true;
+            if (potion.isSpecialCandy)
             {
-                potion.isMatched = true;
-            }
-            RemoveAndRefill(potionsToRemove);
-            GameManager.instance.ProcessTurn(potionsToRemove.Count, _subtractMoves);
-            yield return new WaitForSeconds(0.4f);
-
-            if (GameManager.instance != null && GameManager.instance.isGameEnded)
-            {
-                yield break;
-            }
-
-            if (CheckBoard())
-            {
-                // Cascade matches should NOT subtract moves - only the initial move counts
-                StartCoroutine(ProcessTurnOnMatchedBoard(false));
+                matchedSpecials.Add(potion);
             }
             else
             {
-                // No more matches, snap all potions to ensure alignment
-                yield return new WaitForSeconds(0.2f);
-                SnapAllPotionsToGrid();
-                
-                // Then check if there are valid moves
-                CheckForValidMoves();
+                regularMatches.Add(potion);
             }
+        }
+
+        potionsToRemove.Clear();
+
+        foreach (Potion special in matchedSpecials)
+        {
+            if (special == null) continue;
+            Debug.Log($"🎬 Activating matched special candy {special.candyType} before removal");
+            yield return StartCoroutine(ActivateSpecialCandySequence(special));
+        }
+
+        if (regularMatches.Count > 0)
+        {
+            foreach (Potion regular in regularMatches)
+            {
+                if (regular == null) continue;
+                potionsToRemove.Add(regular);
+            }
+
+            if (potionsToRemove.Count > 0)
+            {
+                RemoveAndRefill(potionsToRemove, triggerSpecialChain: false);
+                potionsToRemove.Clear();
+            }
+        }
+
+        int totalRemoved = matchedSpecials.Count + regularMatches.Count;
+        if (GameManager.instance != null && totalRemoved > 0)
+        {
+            GameManager.instance.ProcessTurn(totalRemoved, _subtractMoves);
+        }
+
+        yield return new WaitForSeconds(0.4f);
+
+        if (GameManager.instance != null && GameManager.instance.isGameEnded)
+        {
+            isProcessingMove = false;
+            yield break;
+        }
+
+        if (CheckBoard())
+        {
+            // Cascade matches should NOT subtract moves - only the initial move counts
+            StartCoroutine(ProcessTurnOnMatchedBoard(false));
+        }
+        else
+        {
+            // No more matches, snap all potions to ensure alignment
+            yield return new WaitForSeconds(0.2f);
+            SnapAllPotionsToGrid();
+
+            // Then check if there are valid moves
+            CheckForValidMoves();
+
+            // All processing complete, allow new moves
+            Debug.Log("✅ ProcessTurnOnMatchedBoard complete, setting isProcessingMove = false");
+            isProcessingMove = false;
+        }
     }
 
-    private void RemoveAndRefill(List<Potion> potionsToRemove)
+    private void RemoveAndRefill(List<Potion> potionsToRemove, bool triggerSpecialChain = true)
     {
         // First, spawn special candies at match locations (before clearing)
         foreach (var specialSpawn in specialCandiesToSpawn)
@@ -1383,20 +1470,43 @@ public class PotionBoard : MonoBehaviour
         
         specialCandiesToSpawn.Clear();
         
+        List<Potion> chainSpecials = new();
+        
         foreach (Potion potion in potionsToRemove)
         {
+            if (potion == null) continue;
+            
             int _xIndex = potion.xIndex;
             int _yIndex = potion.yIndex;
 
-            if (potionBoard[_xIndex, _yIndex].potion != potion.gameObject)
+            if (triggerSpecialChain && potion.isSpecialCandy)
             {
-                // A special candy is here, don't destroy it
-                Debug.Log($"Keeping special candy at ({_xIndex},{_yIndex})");
+                chainSpecials.Add(potion);
                 continue;
             }
 
             Destroy(potion.gameObject);
-            potionBoard[_xIndex, _yIndex] = new Node(true, null);
+            
+            // Only mark as empty if this candy is still in the board at this position
+            if (_xIndex >= 0 && _xIndex < width && _yIndex >= 0 && _yIndex < height)
+            {
+                // Only set to null if this potion is still the one in the board
+                // (A special candy might have already replaced it)
+                if (potionBoard[_xIndex, _yIndex].potion == potion.gameObject)
+                {
+                    potionBoard[_xIndex, _yIndex] = new Node(true, null);
+                }
+            }
+        }
+
+        if (triggerSpecialChain)
+        {
+            foreach (Potion special in chainSpecials)
+            {
+                if (special == null) continue;
+                Debug.Log($"🔁 Chain activating special candy {special.candyType}");
+                StartCoroutine(ActivateSpecialCandySequence(special));
+            }
         }
 
         for (int x = 0; x < width; x++)
@@ -1522,10 +1632,12 @@ public class PotionBoard : MonoBehaviour
         potionComponent.isSpecialCandy = true; // Mark as special
         potionComponent.baseColor = originalType; // ⭐ PRESERVE THE MATCHED COLOR!
         
-        ApplyCandySprite(specialCandy, specialType);
+        Debug.Log($"✨✨✨ SPAWNED SPECIAL CANDY: Type={specialType}, isSpecial={potionComponent.isSpecialCandy}, BaseColor={originalType}, Position=({x},{y})");
         
-        // Optional: Add color tint to show which member color this special candy is
-        ApplyColorTintToSpecialCandy(specialCandy, originalType);
+        ApplyCandySprite(specialCandy, originalType); // Use the ORIGINAL member's sprite, not special type
+        
+        // ✨ AUTOMATICALLY APPLY VISUAL EFFECTS (stripes, balloon, rainbow)
+        potionComponent.UpdateVisualEffects();
         
         potionBoard[x, y] = new Node(true, specialCandy);
         
@@ -1672,18 +1784,18 @@ public class PotionBoard : MonoBehaviour
 
                 if (extraConnectedPotions.Count >= 2)
                 {
-                    Debug.Log("💜 L-SHAPE or T-SHAPE DETECTED! Creates FanHeartBomb");
+                    Debug.Log("🎈 L-SHAPE or T-SHAPE DETECTED! Creates Balloon");
                     extraConnectedPotions.AddRange(_matchedResults.connectedPotions);
                     
-                    // Determine if it's a 5+ match (creates DynamiteCandy) or L/T shape (creates FanHeartBomb)
+                    // Check total count: 5+ creates Rainbow, otherwise creates Balloon
                     int totalCount = extraConnectedPotions.Count;
-                    if (totalCount >= 6)
+                    if (totalCount >= 5)
                     {
                         return new MatchResult
                         {
                             connectedPotions = extraConnectedPotions,
                             direction = MatchDirection.Super,
-                            matchType = MatchType.Match6Plus,
+                            matchType = MatchType.Match5Plus,
                             createSpecialCandy = true
                         };
                     }
@@ -1693,7 +1805,7 @@ public class PotionBoard : MonoBehaviour
                         {
                             connectedPotions = extraConnectedPotions,
                             direction = MatchDirection.Super,
-                            matchType = MatchType.LShape,
+                            matchType = MatchType.TShape, // Could be T or L, both create Balloon
                             createSpecialCandy = true
                         };
                     }
@@ -1711,17 +1823,17 @@ public class PotionBoard : MonoBehaviour
 
                 if (extraConnectedPotions.Count >= 2)
                 {
-                    Debug.Log("💜 L-SHAPE or T-SHAPE DETECTED! Creates FanHeartBomb");
+                    Debug.Log("🎈 L-SHAPE or T-SHAPE DETECTED! Creates Balloon");
                     extraConnectedPotions.AddRange(_matchedResults.connectedPotions);
                     
                     int totalCount = extraConnectedPotions.Count;
-                    if (totalCount >= 6)
+                    if (totalCount >= 5)
                     {
                         return new MatchResult
                         {
                             connectedPotions = extraConnectedPotions,
                             direction = MatchDirection.Super,
-                            matchType = MatchType.Match6Plus,
+                            matchType = MatchType.Match5Plus,
                             createSpecialCandy = true
                         };
                     }
@@ -1731,7 +1843,7 @@ public class PotionBoard : MonoBehaviour
                         {
                             connectedPotions = extraConnectedPotions,
                             direction = MatchDirection.Super,
-                            matchType = MatchType.LShape,
+                            matchType = MatchType.LShape, // Could be T or L, both create Balloon
                             createSpecialCandy = true
                         };
                     }
@@ -1761,23 +1873,23 @@ public class PotionBoard : MonoBehaviour
         {
             if (horizontalCount >= 5)
             {
-                Debug.Log($"🎵 HORIZONTAL 5-MATCH! {horizontalCount}x {potionType} - Creates AlbumBomb/StageBomb");
+                Debug.Log($"� HORIZONTAL 5+ MATCH! {horizontalCount}x {potionType} - Creates Rainbow");
                 return new MatchResult
                 {
                     connectedPotions = connectedPotions,
                     direction = MatchDirection.LongHorizontal,
-                    matchType = MatchType.Row5Plus,
+                    matchType = MatchType.Match5Plus,
                     createSpecialCandy = true
                 };
             }
             else if (horizontalCount == 4)
             {
-                Debug.Log($"🎤 HORIZONTAL 4-MATCH! {potionType} - Creates MicCandy/Lightstick");
+                Debug.Log($"📏 HORIZONTAL 4-MATCH! {potionType} - Creates StripedVertical (clears column)");
                 return new MatchResult
                 {
                     connectedPotions = connectedPotions,
                     direction = MatchDirection.Horizontal,
-                    matchType = MatchType.Row4,
+                    matchType = MatchType.Match4Horizontal,
                     createSpecialCandy = true
                 };
             }
@@ -1811,23 +1923,23 @@ public class PotionBoard : MonoBehaviour
         {
             if (verticalCount >= 5)
             {
-                Debug.Log($"🎵 VERTICAL 5-MATCH! {verticalCount}x {potionType} - Creates AlbumBomb/StageBomb");
+                Debug.Log($"� VERTICAL 5+ MATCH! {verticalCount}x {potionType} - Creates Rainbow");
                 return new MatchResult
                 {
                     connectedPotions = connectedPotions,
                     direction = MatchDirection.LongVertical,
-                    matchType = MatchType.Column5Plus,
+                    matchType = MatchType.Match5Plus,
                     createSpecialCandy = true
                 };
             }
             else if (verticalCount == 4)
             {
-                Debug.Log($"🎤 VERTICAL 4-MATCH! {potionType} - Creates MicCandy/Lightstick");
+                Debug.Log($"📏 VERTICAL 4-MATCH! {potionType} - Creates StripedHorizontal (clears row)");
                 return new MatchResult
                 {
                     connectedPotions = connectedPotions,
                     direction = MatchDirection.Vertical,
-                    matchType = MatchType.Column4,
+                    matchType = MatchType.Match4Vertical,
                     createSpecialCandy = true
                 };
             }
@@ -1916,35 +2028,44 @@ public class PotionBoard : MonoBehaviour
 
     #region Swapping potions
 
-    public void SelectPotion(Potion _potion){
+    public void SelectPotion(Potion _potion)
+    {
         if (selectedPotion == null)
         {
             if (_potion.isSpecialCandy)
             {
-                Debug.Log($"✨ Special candy selected: {_potion.candyType}");
+                Debug.Log($"✨ Special candy selected: {_potion.candyType} (isSpecial={_potion.isSpecialCandy})");
                 selectedPotion = _potion;
                 ShowSelectionIndicator(_potion);
             }
             else
             {
-                Debug.Log(_potion);
+                Debug.Log($"Regular candy selected: {_potion.candyType}");
                 selectedPotion = _potion;
                 ShowSelectionIndicator(_potion);
             }
         }
         else if (selectedPotion == _potion)
         {
-            // Clicked same candy - if it's special, activate it!
-            if (_potion.isSpecialCandy && specialCandyManager != null)
-            {
-                Debug.Log($"🎵 Activating special candy: {_potion.candyType}");
-                StartCoroutine(ActivateSpecialCandySequence(_potion));
-            }
+            // Second click on same candy just toggles selection off. Activation now requires a valid swap/match.
+            Debug.Log($"Deselecting candy: {_potion.candyType}");
             selectedPotion = null;
             HideSelectionIndicator();
         }
         else if (selectedPotion != _potion)
         {
+            // Check if candies are adjacent - REQUIRED even for special candies!
+            bool adjacent = isAdjacent(selectedPotion, _potion);
+            Debug.Log($"🎯 Second click: A=({selectedPotion.xIndex},{selectedPotion.yIndex}) B=({_potion.xIndex},{_potion.yIndex}) adjacent={adjacent}");
+            if (!adjacent)
+            {
+                Debug.Log($"❌ Cannot swap: candies are not adjacent");
+                // Switch selection to the clicked candy instead
+                selectedPotion = _potion;
+                ShowSelectionIndicator(_potion);
+                return;
+            }
+
             if (selectedPotion.isSpecialCandy && _potion.isSpecialCandy)
             {
                 Debug.Log($"💥 SPECIAL COMBO! {selectedPotion.candyType} + {_potion.candyType}");
@@ -2084,12 +2205,25 @@ public class PotionBoard : MonoBehaviour
 
     private void SwapPotion(Potion _currentPotion, Potion _targetPotion)
     {
-        if (!isAdjacent(_currentPotion, _targetPotion))
+        if (isProcessingMove)
         {
+            Debug.Log("❌ Swap blocked: a move is already processing");
             return;
         }
+        if (_currentPotion != null && _currentPotion.isMoving || _targetPotion != null && _targetPotion.isMoving)
+        {
+            Debug.Log("❌ Swap blocked: one of the potions is moving");
+            return;
+        }
+        if (!isAdjacent(_currentPotion, _targetPotion))
+        {
+            Debug.Log($"❌ Swap blocked: not adjacent. A=({_currentPotion?.xIndex},{_currentPotion?.yIndex}) B=({_targetPotion?.xIndex},{_targetPotion?.yIndex})");
+            return;
+        }
+        Debug.Log($"🔄 Swapping A=({_currentPotion.xIndex},{_currentPotion.yIndex}) with B=({_targetPotion.xIndex},{_targetPotion.yIndex})");
         DoSwap(_currentPotion, _targetPotion);
         isProcessingMove = true;
+        Debug.Log("▶️ isProcessingMove = true (after SwapPotion)");
         StartCoroutine(ProcessMatches(_currentPotion, _targetPotion));
     }
 
@@ -2118,34 +2252,121 @@ public class PotionBoard : MonoBehaviour
         HideSelectionIndicator(); // Hide indicator during processing
         yield return new WaitForSeconds(0.2f);
         
-        bool specialActivated = CheckAndActivateSpecialCandy(_currentPotion, _targetPotion);
+        bool specialActivated = false;
+        yield return StartCoroutine(CheckAndActivateSpecialCandyCoroutine(_currentPotion, _targetPotion, 
+            (activated) => { specialActivated = activated; }
+        ));
         
         if (specialActivated)
         {
-            isProcessingMove = false;
+            // Special candy was activated
+            Debug.Log("✅ Special candy activation complete from swap");
+            
+            // Check for matches after special candy activation
+            if (CheckBoard())
+            {
+                Debug.Log("🔄 Matches found after special candy swap, processing cascades");
+                StartCoroutine(ProcessTurnOnMatchedBoard(true));
+                // ProcessTurnOnMatchedBoard will reset isProcessingMove
+            }
+            else
+            {
+                Debug.Log("✅ No matches after special candy swap, setting isProcessingMove = false");
+                SnapAllPotionsToGrid();
+                CheckForValidMoves();
+                isProcessingMove = false;
+            }
+        }
+        else
+        {
+            // No special activation, check for regular matches
+            bool hasMatched = CheckBoard();
+
+            if (hasMatched)
+            {
+                Debug.Log("📋 Regular match found, starting ProcessTurnOnMatchedBoard");
+                StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            }
+            else
+            {
+                Debug.Log("❌ No match, swapping back");
+                DoSwap(_currentPotion, _targetPotion);
+                yield return new WaitForSeconds(0.3f);
+                SnapAllPotionsToGrid(); // Ensure alignment after swap back
+                CheckForValidMoves();
+                Debug.Log("✅ Swap back complete, setting isProcessingMove = false");
+                isProcessingMove = false;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Check if swap involves a special candy and activate it
+    /// Coroutine version that properly waits for activation to complete
+    /// </summary>
+    private IEnumerator CheckAndActivateSpecialCandyCoroutine(Potion candy1, Potion candy2, System.Action<bool> callback)
+    {
+        Debug.Log($"🔍 CheckAndActivateSpecialCandyCoroutine: candy1={candy1.candyType} (isSpecial={candy1.isSpecialCandy}), candy2={candy2.candyType} (isSpecial={candy2.isSpecialCandy})");
+        
+        Potion specialCandy = null;
+        Potion regularCandy = null;
+        
+        if (candy1.isSpecialCandy && !candy2.isSpecialCandy)
+        {
+            specialCandy = candy1;
+            regularCandy = candy2;
+            Debug.Log($"   candy1 is special, candy2 is regular");
+        }
+        else if (candy2.isSpecialCandy && !candy1.isSpecialCandy)
+        {
+            specialCandy = candy2;
+            regularCandy = candy1;
+            Debug.Log($"   candy2 is special, candy1 is regular");
+        }
+        else if (candy1.isSpecialCandy && candy2.isSpecialCandy)
+        {
+            // Both are special - combo!
+            Debug.Log("💥 SPECIAL COMBO DETECTED!");
+            yield return StartCoroutine(HandleSpecialCombo(candy1, candy2));
+            callback(true);
+            yield break;
+        }
+        else
+        {
+            // Neither is special
+            Debug.Log($"   Neither candy is special");
+            callback(false);
             yield break;
         }
         
-        bool hasMatched = CheckBoard();
-
-        if (CheckBoard())
+        if (specialCandy != null && regularCandy != null)
         {
-            StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            // 🎯 FIXED: Special candies should ONLY activate if they match with their base color
+            // This makes special candies work like regular candies - they need to match to activate
+            Debug.Log($"🔍 Special candy {specialCandy.candyType} (base color: {specialCandy.baseColor}) swapped with {regularCandy.candyType}");
+            
+            if (specialCandy.baseColor == regularCandy.candyType)
+            {
+                Debug.Log($"✨ COLOR MATCH! Special candy can activate when part of a match");
+                // Let the normal match detection run - if there's a 3+ match, it will activate
+                callback(false); // Continue to match detection
+            }
+            else
+            {
+                Debug.Log($"❌ No color match. Special candy base={specialCandy.baseColor}, regular={regularCandy.candyType}. No activation.");
+                // Different colors - no activation, no match
+                callback(false); // Continue to match detection (which will find nothing and swap back)
+            }
+            yield break;
         }
-
-        else
-        {
-            DoSwap(_currentPotion, _targetPotion);
-            yield return new WaitForSeconds(0.3f);
-            SnapAllPotionsToGrid(); // Ensure alignment after swap back
-            CheckForValidMoves();
-        }
-        isProcessingMove = false;
+        
+        callback(false);
     }
     
     /// <summary>
     /// Check if swap involves a special candy matching with its base color
     /// If so, activate the special candy instead of regular matching
+    /// DEPRECATED: Use CheckAndActivateSpecialCandyCoroutine instead
     /// </summary>
     private bool CheckAndActivateSpecialCandy(Potion candy1, Potion candy2)
     {
@@ -2177,14 +2398,22 @@ public class PotionBoard : MonoBehaviour
         
         if (specialCandy != null && regularCandy != null)
         {
+            // In Candy Crush: special candies ALWAYS activate when swapped with ANY candy
+            // If matched with same color in a group, both the special effect AND match happen
+            Debug.Log($"🎵 Special candy {specialCandy.candyType} (base color: {specialCandy.baseColor}) swapped with {regularCandy.candyType}!");
+            
+            // Activate the special candy
+            StartCoroutine(ActivateSpecialCandySequence(specialCandy));
+            
+            // If it's the same color, also allow match detection to trigger
             if (specialCandy.baseColor == regularCandy.candyType)
             {
-                Debug.Log($"🎵 Special candy {specialCandy.candyType} (color: {specialCandy.baseColor}) matched with {regularCandy.candyType}!");
-                Debug.Log($"Activating special candy!");
-                
-                StartCoroutine(ActivateSpecialCandySequence(specialCandy));
-                return true;
+                Debug.Log($"✨ Same color match! Will also check for regular matches");
+                return false; // Let normal match detection continue
             }
+            
+            // Different colors - just activate special candy
+            return true; // Skip normal match detection
         }
         
         return false;
@@ -2414,6 +2643,34 @@ public class PotionBoard : MonoBehaviour
     /// <summary>
     /// Activate a special candy (called when double-clicked)
     /// </summary>
+    /// <summary>
+    /// Wrapper for activating special candy from double-click
+    /// Manages isProcessingMove and cleanup
+    /// </summary>
+    private IEnumerator ActivateSpecialCandyWithCleanup(Potion specialCandy)
+    {
+        yield return StartCoroutine(ActivateSpecialCandySequence(specialCandy));
+        
+        // After activation, check if there are matches and handle accordingly
+        if (CheckBoard())
+        {
+            Debug.Log("🔄 Matches found after special candy activation (double-click), processing cascades");
+            StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            // ProcessTurnOnMatchedBoard will reset isProcessingMove
+        }
+        else
+        {
+            Debug.Log("✅ No matches after special candy activation (double-click), setting isProcessingMove = false");
+            SnapAllPotionsToGrid();
+            CheckForValidMoves();
+            isProcessingMove = false;
+        }
+    }
+    
+    /// <summary>
+    /// Activate a special candy at its position
+    /// NOTE: This does NOT manage isProcessingMove - caller must do that
+    /// </summary>
     private IEnumerator ActivateSpecialCandySequence(Potion specialCandy)
     {
         if (specialCandyManager == null)
@@ -2422,35 +2679,35 @@ public class PotionBoard : MonoBehaviour
             yield break;
         }
         
-        isProcessingMove = true;
+        // NOTE: isProcessingMove is managed by the caller (ProcessMatches or SelectPotion)
+        // Don't set it here to avoid conflicts
         
         int x = specialCandy.xIndex;
         int y = specialCandy.yIndex;
         BTSCandyType candyType = specialCandy.candyType;
         
-        Debug.Log($"Activating {candyType} at ({x},{y})");
+        Debug.Log($"🎯 ActivateSpecialCandySequence: Activating {candyType} at ({x},{y})");
         
         yield return StartCoroutine(specialCandyManager.ActivateSpecialCandy(candyType, x, y));
         
+        Debug.Log($"📋 After activation: potionsToRemove.Count = {potionsToRemove.Count}");
+        
+        // Destroy the special candy itself
         Destroy(specialCandy.gameObject);
         potionBoard[x, y] = new Node(true, null);
         
-        // Refill and check for cascades
-        RefillColumn(x);
+        // Process all the candies that were marked for removal during activation
+        if (potionsToRemove.Count > 0)
+        {
+            Debug.Log($"Removing {potionsToRemove.Count} candies from special activation");
+            RemoveAndRefill(potionsToRemove);
+            potionsToRemove.Clear();
+        }
         
         yield return new WaitForSeconds(0.5f);
         
-        if (CheckBoard())
-        {
-            StartCoroutine(ProcessTurnOnMatchedBoard(true));
-        }
-        else
-        {
-            SnapAllPotionsToGrid();
-            CheckForValidMoves();
-        }
-        
-        isProcessingMove = false;
+        Debug.Log($"🏁 ActivateSpecialCandySequence complete");
+        // Caller will handle isProcessingMove and subsequent match checking
     }
     
     /// <summary>
@@ -2478,28 +2735,35 @@ public class PotionBoard : MonoBehaviour
             y
         ));
         
+        // Destroy both special candies
         Destroy(special1.gameObject);
         Destroy(special2.gameObject);
         potionBoard[special1.xIndex, special1.yIndex] = new Node(true, null);
         potionBoard[special2.xIndex, special2.yIndex] = new Node(true, null);
         
-        // Refill
-        RefillColumn(special1.xIndex);
-        RefillColumn(special2.xIndex);
+        // Process all the candies that were marked for removal during combo
+        if (potionsToRemove.Count > 0)
+        {
+            Debug.Log($"Removing {potionsToRemove.Count} candies from combo activation");
+            RemoveAndRefill(potionsToRemove);
+            potionsToRemove.Clear();
+        }
         
         yield return new WaitForSeconds(0.5f);
         
         if (CheckBoard())
         {
+            Debug.Log("🔄 Matches found after combo, processing cascades");
             StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            // Don't set isProcessingMove = false here, ProcessTurnOnMatchedBoard will do it
         }
         else
         {
+            Debug.Log("✅ No matches after combo, setting isProcessingMove = false");
             SnapAllPotionsToGrid();
             CheckForValidMoves();
+            isProcessingMove = false;
         }
-        
-        isProcessingMove = false;
     }
     
     /// <summary>
