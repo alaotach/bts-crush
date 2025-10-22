@@ -26,20 +26,18 @@ public class BTSGameMenuItems
     {
         BTSCandyDatabase asset = ScriptableObject.CreateInstance<BTSCandyDatabase>();
         
-        // Create array with space for all candy types (7 regular + 9 special)
-        asset.candies = new BTSCandyData[16];
+        // Create array with space for all candy types (7 regular + 5 special)
+        asset.candies = new BTSCandyData[12];
         
-        // Initialize some default candy data
+        // Initialize default candy data
         for (int i = 0; i < asset.candies.Length; i++)
         {
             asset.candies[i] = new BTSCandyData
             {
                 candyType = (BTSCandyType)i,
                 displayName = ((BTSCandyType)i).ToString(),
-                description = i < 7 ? "BTS Member Chibi" : "Special Candy",
                 isSpecial = i >= 7, // First 7 are regular members, rest are special
-                scoreValue = i >= 7 ? 50 : 10,
-                clearRadius = 1
+                scoreValue = i >= 7 ? 50 : 10
             };
         }
         
@@ -51,7 +49,8 @@ public class BTSGameMenuItems
         Selection.activeObject = asset;
         
         Debug.Log("Created Default BTS Candy Database at: " + path);
-        Debug.Log("Remember to assign sprites and sound effects in the Inspector!");
+        Debug.Log("Remember to assign sprites in the Inspector!");
+        Debug.Log("7 Regular members + 5 Special candies (StripedH, StripedV, Balloon, ColorBomb, SuperBomb)");
     }
     
     [MenuItem("BTS Match-3/Documentation/Open Candy Reference Guide")]

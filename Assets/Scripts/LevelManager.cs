@@ -2,10 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Example Level Manager showing how to dynamically change board sizes
-/// The board will automatically resize and reposition itself!
-/// </summary>
 public class LevelManager : MonoBehaviour
 {
     [System.Serializable]
@@ -35,7 +31,6 @@ public class LevelManager : MonoBehaviour
     
     void Update()
     {
-        // Example: Press N to load next level (for testing)
         if (Input.GetKeyDown(KeyCode.N))
         {
             LoadNextLevel();
@@ -46,7 +41,6 @@ public class LevelManager : MonoBehaviour
     {
         if (levelIndex < 0 || levelIndex >= levels.Count)
         {
-            Debug.LogError($"Level index {levelIndex} is out of range!");
             return;
         }
         
@@ -58,7 +52,6 @@ public class LevelManager : MonoBehaviour
         PotionBoard board = PotionBoard.Instance;
         if (board == null)
         {
-            Debug.LogError("PotionBoard instance not found!");
             return;
         }
         
@@ -67,8 +60,6 @@ public class LevelManager : MonoBehaviour
         board.width = level.width;
         board.height = level.height;
         
-        // IMPORTANT: Recalculate board transform for new dimensions
-        // This is the magic - the board will automatically fit!
         board.RecalculateBoardTransform();
         
         StartCoroutine(InitializeNewLevel(level));
@@ -77,10 +68,7 @@ public class LevelManager : MonoBehaviour
     private IEnumerator InitializeNewLevel(LevelConfig level)
     {
         yield return null;
-        
-        // Reinitialize the board (you might need to make InitializeBoardCoroutine public)
-        // For now, you can trigger it through your own initialization
-        
+                
         if (GameManager.instance != null)
         {
             GameManager.instance.Initialize(level.moves, level.targetScore);

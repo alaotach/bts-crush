@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
 
     public static GameManager instance;
+    
+    public BTSSpecialCandyManager soundManager;
 
     public GameObject backgroundPanel;
     public GameObject victoryPanel;
@@ -15,7 +18,7 @@ public class GameManager : MonoBehaviour
     public int moves;
     public int points;
     
-    private int startingMoves; // Store initial moves for calculation
+    private int startingMoves; 
 
     public bool isGameEnded;
 
@@ -38,7 +41,7 @@ public class GameManager : MonoBehaviour
     public void Initialize(int _moves, int _goal)
     {
         moves = _moves;
-        startingMoves = _moves; // Store initial moves
+        startingMoves = _moves;
         goal = _goal;
         points = 0;
         isGameEnded = false;
@@ -60,16 +63,28 @@ public class GameManager : MonoBehaviour
         if (_subtractMoves)
         {
             moves--;
+            
+            if (moves == 3 && soundManager != null)
+            {
+                soundManager.PlayLowMovesSound();
+            }
         }
         if (points >= goal)
         {
             isGameEnded = true;
-            PotionBoard.Instance.ClearAllPotions(); // Clear the board when winning
+            PotionBoard.Instance.ClearAllPotions(); 
             
             int movesUsed = startingMoves - moves;
             if (victoryText != null)
             {
                 victoryText.text = $"Congratulations!\nYou have won in {movesUsed} moves,\nand scored {points} points!";
+            }
+            
+            if (soundManager != null)
+            {
+                soundManager.PlayLevelCompletedSound();
+                int stars = CalculateStars(points, goal, movesUsed, startingMoves);
+                StartCoroutine(PlayStarSoundWithDelay(stars, 1.5f));
             }
             
             backgroundPanel.SetActive(true);
@@ -79,11 +94,16 @@ public class GameManager : MonoBehaviour
         if ( moves == 0)
         {
             isGameEnded = true;
-            PotionBoard.Instance.ClearAllPotions(); // Clear the board when losing
+            PotionBoard.Instance.ClearAllPotions(); 
             
             if (loseText != null)
             {
                 loseText.text = $"Unfortunately you only got\n{points} points in {startingMoves} moves.\nBetter Luck Next Time!";
+            }
+            
+            if (soundManager != null)
+            {
+                soundManager.PlayLevelFailedSound();
             }
             
             backgroundPanel.SetActive(true);
@@ -101,5 +121,29 @@ public class GameManager : MonoBehaviour
     public void LoseGame()
     {
         SceneManager.LoadScene(0);
+    }
+    
+    private int CalculateStars(int score, int goalScore, int movesUsed, int totalMoves)
+    {
+        float scoreRatio = (float)score / goalScore;
+        float efficiencyRatio = 1f - ((float)movesUsed / totalMoves);
+        
+        if (scoreRatio >= 1.5f && efficiencyRatio >= 0.5f)
+            return 3;
+        
+        if (scoreRatio >= 1.2f)
+            return 2;
+        
+        return 1;
+    }
+    
+
+    private System.Collections.IEnumerator PlayStarSoundWithDelay(int stars, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (soundManager != null)
+        {
+            soundManager.PlayStarSound(stars);
+        }
     }
 }

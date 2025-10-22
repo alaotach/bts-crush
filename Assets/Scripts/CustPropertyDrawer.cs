@@ -13,7 +13,6 @@ public class CustPropertyDrawer : PropertyDrawer
 		Rect newposition = position;
 		newposition.y += 18f;
 		SerializedProperty data = property.FindPropertyRelative("rows");
-		//data.rows[0][]
 		if (data.arraySize != 8)
 			data.arraySize = 8;
 		for (int j = 0; j < 8; j++)

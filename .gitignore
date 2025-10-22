@@ -22,3 +22,5 @@
 *.userprefs
 *.vs/
 .idea/
+.github/
+.vscode/
