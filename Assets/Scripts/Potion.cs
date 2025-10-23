@@ -32,6 +32,11 @@ public class Potion : MonoBehaviour
 
     public void UpdateVisualEffects()
     {
+        UpdateVisualEffects(null); // Call overload with null sprite
+    }
+    
+    public void UpdateVisualEffects(Sprite balloonSpriteOverride)
+    {
         if (visualizer == null)
         {
             visualizer = GetComponent<SpecialCandyVisualizer>();
@@ -55,7 +60,14 @@ public class Potion : MonoBehaviour
                 
             case BTSCandyType.Balloon:
                 Color memberColor = baseColor.GetMemberColor();
-                visualizer.ApplyBalloon(memberColor);
+                if (balloonSpriteOverride != null)
+                {
+                    visualizer.ApplyBalloon(memberColor, balloonSpriteOverride);
+                }
+                else
+                {
+                    visualizer.ApplyBalloon(memberColor); // Fallback to procedural balloon
+                }
                 isSpecialCandy = true;
                 break;
                 

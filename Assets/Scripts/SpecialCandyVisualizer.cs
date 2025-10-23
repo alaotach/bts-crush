@@ -42,6 +42,13 @@ public class SpecialCandyVisualizer : MonoBehaviour
         ClearEffects();
         CreateBalloonEffect(memberColor);
     }
+    
+    public void ApplyBalloon(Color memberColor, Sprite customBalloonSprite)
+    {
+        ClearEffects();
+        balloonSprite = customBalloonSprite;
+        CreateBalloonEffect(memberColor);
+    }
 
     public void ApplyRainbow()
     {
@@ -155,16 +162,16 @@ public class SpecialCandyVisualizer : MonoBehaviour
         
         balloonBase = new GameObject("Balloon");
         balloonBase.transform.SetParent(transform);
-        balloonBase.transform.localPosition = new Vector3(0, 0, 0.01f); 
+        balloonBase.transform.localPosition = Vector3.zero;
         balloonBase.transform.localRotation = Quaternion.identity;
-        balloonBase.transform.localScale = Vector3.one * 1.2f; 
+        balloonBase.transform.localScale = Vector3.one * 1.5f;
         
         SpriteRenderer balloonRenderer = balloonBase.AddComponent<SpriteRenderer>();
         balloonRenderer.sprite = balloonSprite;
-        balloonRenderer.color = memberColor;
+        balloonRenderer.color = Color.white;
         balloonRenderer.sortingLayerName = spriteRenderer.sortingLayerName;
         balloonRenderer.sortingOrder = spriteRenderer.sortingOrder - 1;
-        transform.localScale = transform.localScale * 0.7f;
+        transform.localScale = transform.localScale * 0.65f;
     }
     
     private void CreateSimpleBalloon(Color memberColor)

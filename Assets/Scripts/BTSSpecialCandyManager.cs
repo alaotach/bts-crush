@@ -170,9 +170,26 @@ public class BTSSpecialCandyManager : MonoBehaviour
                 break;
                 
             case BTSCandyType.Balloon:
-                candiesToClear = GetAreaPattern(x, y, 1);
-                break;
-                
+                candiesToClear = GetAreaPatternExcludingCenter(x, y, 1);
+                yield return StartCoroutine(SpawnEffectForCandy(candyType, x, y, candiesToClear));
+                yield return new WaitForSeconds(0.15f);
+                PlaySound(balloonSound);
+                yield return StartCoroutine(ClearCandiesWithDelay(candiesToClear));
+                yield return new WaitForSeconds(0.3f);
+                yield return new WaitUntil(() => !board.AnyPotionsMoving());
+                Vector2Int balloonNewPos = FindBalloonPosition(x, y);
+                if (balloonNewPos.x == -1)
+                {
+                    activeActivations.Remove(candyKey);
+                    yield break;
+                }
+                candiesToClear = GetAreaPattern(balloonNewPos.x, balloonNewPos.y, 1);
+                yield return StartCoroutine(SpawnEffectForCandy(candyType, balloonNewPos.x, balloonNewPos.y, candiesToClear));
+                yield return new WaitForSeconds(0.15f);
+                PlaySound(balloonSound);
+                yield return StartCoroutine(ClearCandiesWithDelay(candiesToClear));
+                activeActivations.Remove(candyKey);
+                yield break;
             case BTSCandyType.ColorBomb:
                 if (targetColor.IsRegularMember())
                 {
@@ -246,6 +263,27 @@ public class BTSSpecialCandyManager : MonoBehaviour
         return positions;
     }
     
+    private List<Vector2Int> GetAreaPatternExcludingCenter(int centerX, int centerY, int radius)
+    {
+        List<Vector2Int> positions = new List<Vector2Int>();
+        
+        for (int x = centerX - radius; x <= centerX + radius; x++)
+        {
+            for (int y = centerY - radius; y <= centerY + radius; y++)
+            {
+                if (x == centerX && y == centerY)
+                    continue;
+                    
+                if (x >= 0 && x < board.width && y >= 0 && y < board.height)
+                {
+                    positions.Add(new Vector2Int(x, y));
+                }
+            }
+        }
+        
+        return positions;
+    }
+    
     private List<Vector2Int> GetAllOfColorPattern(BTSCandyType targetColor)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
@@ -267,7 +305,6 @@ public class BTSSpecialCandyManager : MonoBehaviour
             }
         }
         
-        Debug.Log($"Found {positions.Count} candies of color {targetColor}");
         return positions;
     }
     
@@ -393,7 +430,7 @@ public class BTSSpecialCandyManager : MonoBehaviour
     }
     
 
-    public IEnumerator HandleSpecialCombo(BTSCandyType candy1, BTSCandyType candy2, int x, int y)
+    public IEnumerator HandleSpecialCombo(BTSCandyType candy1, BTSCandyType candy2, BTSCandyType baseColor1, BTSCandyType baseColor2, int x, int y)
     {
         PlaySound(comboSound);
         if (megaBombPrefab != null)
@@ -414,14 +451,15 @@ public class BTSSpecialCandyManager : MonoBehaviour
         else if (candy1 == BTSCandyType.ColorBomb || candy2 == BTSCandyType.ColorBomb)
         {
             BTSCandyType otherCandy = (candy1 == BTSCandyType.ColorBomb) ? candy2 : candy1;
+            BTSCandyType otherBaseColor = (candy1 == BTSCandyType.ColorBomb) ? baseColor2 : baseColor1;
             
             if (otherCandy == BTSCandyType.StripedHorizontal || otherCandy == BTSCandyType.StripedVertical)
             {
-                candiesToClear = TransformAndActivateStriped(otherCandy);
+                candiesToClear = TransformAndActivateStriped(otherCandy, otherBaseColor);
             }
             else if (otherCandy == BTSCandyType.Balloon)
             {
-                candiesToClear = TransformAndActivateBalloons();
+                candiesToClear = TransformAndActivateBalloons(otherBaseColor);
             }
         }
         else if ((candy1 == BTSCandyType.StripedHorizontal || candy1 == BTSCandyType.StripedVertical) &&
@@ -458,10 +496,11 @@ public class BTSSpecialCandyManager : MonoBehaviour
     }
     
 
-    private List<Vector2Int> TransformAndActivateStriped(BTSCandyType stripedType)
+    private List<Vector2Int> TransformAndActivateStriped(BTSCandyType stripedType, BTSCandyType targetColor)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
-        BTSCandyType targetColor = candyDatabase.GetRandomRegularCandy();
+        List<Potion> transformedCandies = new List<Potion>();
+        
         for (int x = 0; x < board.width; x++)
         {
             for (int y = 0; y < board.height; y++)
@@ -469,18 +508,33 @@ public class BTSSpecialCandyManager : MonoBehaviour
                 if (board.potionBoard[x, y] != null && board.potionBoard[x, y].isUsable && board.potionBoard[x, y].potion != null)
                 {
                     Potion potion = board.potionBoard[x, y].potion.GetComponent<Potion>();
-                    if (potion.candyType == targetColor)
+                    BTSCandyType potionType = potion.isSpecialCandy ? potion.baseColor : potion.candyType;
+                    
+                    if (potionType == targetColor && !potion.isSpecialCandy)
                     {
-                        if (stripedType == BTSCandyType.StripedHorizontal)
-                        {
-                            positions.AddRange(GetRowPattern(y));
-                        }
-                        else
-                        {
-                            positions.AddRange(GetColumnPattern(x));
-                        }
+                        potion.candyType = stripedType;
+                        potion.isSpecialCandy = true;
+                        potion.baseColor = targetColor;
+                        potion.UpdateVisualEffects();
+                        transformedCandies.Add(potion);
+                    }
+                    else if (potionType == targetColor && potion.isSpecialCandy)
+                    {
+                        transformedCandies.Add(potion);
                     }
                 }
+            }
+        }
+        
+        foreach (Potion striped in transformedCandies)
+        {
+            if (stripedType == BTSCandyType.StripedHorizontal)
+            {
+                positions.AddRange(GetRowPattern(striped.yIndex));
+            }
+            else
+            {
+                positions.AddRange(GetColumnPattern(striped.xIndex));
             }
         }
         
@@ -488,12 +542,10 @@ public class BTSSpecialCandyManager : MonoBehaviour
     }
     
 
-    private List<Vector2Int> TransformAndActivateBalloons()
+    private List<Vector2Int> TransformAndActivateBalloons(BTSCandyType targetColor)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
-        
-        BTSCandyType targetColor = candyDatabase.GetRandomRegularCandy();
-        
+        List<Potion> transformedCandies = new List<Potion>();
         for (int x = 0; x < board.width; x++)
         {
             for (int y = 0; y < board.height; y++)
@@ -501,14 +553,71 @@ public class BTSSpecialCandyManager : MonoBehaviour
                 if (board.potionBoard[x, y] != null && board.potionBoard[x, y].isUsable && board.potionBoard[x, y].potion != null)
                 {
                     Potion potion = board.potionBoard[x, y].potion.GetComponent<Potion>();
-                    if (potion.candyType == targetColor)
+                    BTSCandyType potionType = potion.isSpecialCandy ? potion.baseColor : potion.candyType;
+                    
+                    if (potionType == targetColor && !potion.isSpecialCandy)
                     {
-                        positions.AddRange(GetAreaPattern(x, y, 1));
+                        potion.candyType = BTSCandyType.Balloon;
+                        potion.isSpecialCandy = true;
+                        potion.baseColor = targetColor;
+                        BTSCandyData balloonData = candyDatabase.GetCandyData(BTSCandyType.Balloon);
+                        if (balloonData != null && balloonData.balloonSprite != null)
+                        {
+                            potion.UpdateVisualEffects(balloonData.balloonSprite);
+                        }
+                        else
+                        {
+                            potion.UpdateVisualEffects();
+                        }
+                        
+                        transformedCandies.Add(potion);
+                    }
+                    else if (potionType == targetColor && potion.isSpecialCandy)
+                    {
+                        transformedCandies.Add(potion);
                     }
                 }
             }
         }
         
+        foreach (Potion balloon in transformedCandies)
+        {
+            positions.AddRange(GetAreaPattern(balloon.xIndex, balloon.yIndex, 1));
+        }
         return positions;
+    }
+    
+    private Vector2Int FindBalloonPosition(int originalX, int originalY)
+    {
+        if (board.potionBoard[originalX, originalY] != null && 
+            board.potionBoard[originalX, originalY].isUsable && 
+            board.potionBoard[originalX, originalY].potion != null)
+        {
+            Potion potion = board.potionBoard[originalX, originalY].potion.GetComponent<Potion>();
+            if (potion != null && potion.candyType == BTSCandyType.Balloon)
+            {
+                return new Vector2Int(originalX, originalY);
+            }
+        }
+        
+        for (int x = 0; x < board.width; x++)
+        {
+            for (int y = 0; y < board.height; y++)
+            {
+                if (board.potionBoard[x, y] != null && 
+                    board.potionBoard[x, y].isUsable && 
+                    board.potionBoard[x, y].potion != null)
+                {
+                    Potion potion = board.potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion != null && potion.candyType == BTSCandyType.Balloon && 
+                        Mathf.Abs(x - originalX) <= 2 && Mathf.Abs(y - originalY) <= 2)
+                    {
+                        return new Vector2Int(x, y);
+                    }
+                }
+            }
+        }
+        
+        return new Vector2Int(-1, -1);
     }
 }

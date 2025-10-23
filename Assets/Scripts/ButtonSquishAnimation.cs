@@ -68,7 +68,7 @@ public class ButtonSquishAnimation : MonoBehaviour, IPointerDownHandler, IPointe
         isPressed = true;
         targetScale = originalScale * pressedScale;
         
-        BTSSpecialCandyManager soundManager = FindObjectOfType<BTSSpecialCandyManager>();
+        BTSSpecialCandyManager soundManager = FindAnyObjectByType<BTSSpecialCandyManager>();
         if (soundManager != null)
         {
             soundManager.PlayButtonPressSound();

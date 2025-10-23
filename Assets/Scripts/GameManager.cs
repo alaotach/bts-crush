@@ -36,6 +36,30 @@ public class GameManager : MonoBehaviour
         if (backgroundPanel != null) backgroundPanel.SetActive(false);
         if (victoryPanel != null) victoryPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
+        
+        int selectedLevel = PlayerPrefs.GetInt("CurrentLevel", 1);        
+        PlayerPrefs.DeleteKey("CurrentLevel");
+        PlayerPrefs.Save();
+        
+        int levelMoves = CalculateMovesForLevel(selectedLevel);
+        int levelGoal = CalculateGoalForLevel(selectedLevel);        
+        // Set them
+        Initialize(levelMoves, levelGoal);
+    }
+    
+    private int CalculateMovesForLevel(int level)
+    {
+        int baseMoves = 20;
+        int movesDecreaseInterval = 5;
+        int calculatedMoves = baseMoves - ((level - 1) / movesDecreaseInterval);
+        return Mathf.Max(calculatedMoves, 10);
+    }
+    
+    private int CalculateGoalForLevel(int level)
+    {
+        int baseGoal = 50;
+        int increasePerLevel = 5;
+        return baseGoal + ((level - 1) * increasePerLevel);
     }
 
     public void Initialize(int _moves, int _goal)

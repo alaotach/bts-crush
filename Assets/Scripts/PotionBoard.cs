@@ -89,7 +89,7 @@ public class PotionBoard : MonoBehaviour
             specialCandyManager = GetComponent<BTSSpecialCandyManager>();
             if (specialCandyManager == null)
             {
-                specialCandyManager = FindObjectOfType<BTSSpecialCandyManager>();
+                specialCandyManager = FindAnyObjectByType<BTSSpecialCandyManager>();
             }
         }
         
@@ -187,10 +187,6 @@ public class PotionBoard : MonoBehaviour
         {
             potionParent.transform.localPosition = new Vector3(boardOffset.x, boardOffset.y, 0);
             potionParent.transform.localScale = Vector3.one * potionParentScale;
-        }
-        else
-        {
-            Debug.LogError("[Board Transform] potionParent is NULL!");
         }
     }
     
@@ -360,33 +356,38 @@ public class PotionBoard : MonoBehaviour
         switch (member)
         {
             case BTSCandyType.RM:
-                return new Color(1f, 0.5f, 1f, 1f); // Purple tint
+                return new Color(1f, 0.5f, 1f, 1f); 
                 
             case BTSCandyType.Jin:
-                return new Color(1f, 0.7f, 0.85f, 1f); // Pink tint
+                return new Color(1f, 0.7f, 0.85f, 1f);
                 
             case BTSCandyType.Suga:
-                return new Color(0.8f, 0.8f, 0.8f, 1f); // Gray tint
+                return new Color(0.8f, 0.8f, 0.8f, 1f); 
                 
             case BTSCandyType.JHope:
-                return new Color(1f, 0.8f, 0.5f, 1f); // Orange tint
+                return new Color(1f, 0.8f, 0.5f, 1f); 
                 
             case BTSCandyType.Jimin:
-                return new Color(1f, 1f, 0.6f, 1f); // Yellow tint
+                return new Color(1f, 1f, 0.6f, 1f); 
                 
             case BTSCandyType.V:
-                return new Color(0.6f, 1f, 0.7f, 1f); // Green tint
+                return new Color(0.6f, 1f, 0.7f, 1f);
                 
             case BTSCandyType.Jungkook:
-                return new Color(0.7f, 0.85f, 1f, 1f); // Blue tint
+                return new Color(0.7f, 0.85f, 1f, 1f);
                 
             default:
-                return Color.white; // No tint
+                return Color.white;
         }
     }
 
     void Start()
     {
+        if (autoFitToScreen)
+        {
+            CalculateOptimalBoardTransform();
+            ApplyBoardTransform();
+        }
         
         StartCoroutine(InitializeBoardCoroutine());
     }
@@ -400,6 +401,27 @@ public class PotionBoard : MonoBehaviour
 
     private void OnValidate()
     {
+        if (arrayLayout != null)
+        {
+            if (arrayLayout.rows == null || arrayLayout.rows.Length != height)
+            {
+                System.Array.Resize(ref arrayLayout.rows, height);
+            }
+            for (int i = 0; i < height; i++)
+            {
+                if (arrayLayout.rows[i].row == null || arrayLayout.rows[i].row.Length != width)
+                {
+                    bool[] newRow = new bool[width];
+                    if (arrayLayout.rows[i].row != null)
+                    {
+                        int copyLength = Mathf.Min(arrayLayout.rows[i].row.Length, width);
+                        System.Array.Copy(arrayLayout.rows[i].row, newRow, copyLength);
+                    }
+                    arrayLayout.rows[i].row = newRow;
+                }
+            }
+        }
+        
         if (Application.isPlaying && autoFitToScreen && potionParent != null)
         {
             CalculateOptimalBoardTransform();
@@ -410,7 +432,6 @@ public class PotionBoard : MonoBehaviour
     
     private void HandleInput()
     {
-        if (Mouse.current == null) return;
         if (!isBoardInitialized) return;
 
         if (GameManager.instance != null && GameManager.instance.isGameEnded)
@@ -423,10 +444,28 @@ public class PotionBoard : MonoBehaviour
             return;
         }
         
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
-        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+        Vector2 inputPosition = Vector2.zero;
+        bool inputPressed = false;
+        
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        {
+            inputPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+            inputPressed = Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+        }
+        else if (Mouse.current != null)
+        {
+            inputPosition = Mouse.current.position.ReadValue();
+            inputPressed = Mouse.current.leftButton.wasPressedThisFrame;
+        }
+        else
+        {
+            return;
+        }
+        
+        Ray ray = Camera.main.ScreenPointToRay(inputPosition);
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        
+        if (inputPressed)
         {
             if (hit.collider != null)
             {
@@ -434,15 +473,28 @@ public class PotionBoard : MonoBehaviour
                 if (potion != null && !potion.isMatched)
                 {
                     dragStartPotion = potion;
-                    dragStartPos = mousePosition;
+                    dragStartPos = inputPosition;
                     isDragging = true;
                     SelectPotion(potion);
                 }
             }
         }
-        if (Mouse.current.leftButton.isPressed && isDragging && dragStartPotion != null)
+        
+        bool isStillPressed = false;
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
         {
-            Vector2 currentPos = mousePosition;
+            isStillPressed = true;
+            inputPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+        }
+        else if (Mouse.current != null && Mouse.current.leftButton.isPressed)
+        {
+            isStillPressed = true;
+            inputPosition = Mouse.current.position.ReadValue();
+        }
+        
+        if (isStillPressed && isDragging && dragStartPotion != null)
+        {
+            Vector2 currentPos = inputPosition;
             float dragDistance = Vector2.Distance(dragStartPos, currentPos);
             
             if (dragDistance > dragThreshold * 100f)
@@ -479,15 +531,26 @@ public class PotionBoard : MonoBehaviour
             }
         }
         
-        if (Mouse.current.leftButton.wasReleasedThisFrame)
+        bool wasReleased = false;
+        if (Touchscreen.current != null)
+        {
+            wasReleased = Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+            if (wasReleased) inputPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+        }
+        else if (Mouse.current != null)
+        {
+            wasReleased = Mouse.current.leftButton.wasReleasedThisFrame;
+            if (wasReleased) inputPosition = Mouse.current.position.ReadValue();
+        }
+        
+        if (wasReleased)
         {
             if (isDragging && dragStartPotion != null)
             {
-                Vector2 currentPos = mousePosition;
+                Vector2 currentPos = inputPosition;
                 float dragDistance = Vector2.Distance(dragStartPos, currentPos);
                 if (dragDistance <= dragThreshold * 100f)
                 {
-                    // This was a click, not a drag - selection already handled
                 }
             }
             
@@ -575,10 +638,39 @@ public class PotionBoard : MonoBehaviour
             yield break;
         }
         
+        if (arrayLayout.rows.Length != height)
+        {
+            System.Array.Resize(ref arrayLayout.rows, height);
+        }
+        
+        for (int i = 0; i < height; i++)
+        {
+            if (arrayLayout.rows[i].row == null || arrayLayout.rows[i].row.Length != width)
+            {
+                bool[] newRow = new bool[width];
+                if (arrayLayout.rows[i].row != null)
+                {
+                    int copyLength = Mathf.Min(arrayLayout.rows[i].row.Length, width);
+                    System.Array.Copy(arrayLayout.rows[i].row, newRow, copyLength);
+                }
+                arrayLayout.rows[i].row = newRow;
+            }
+        }
+        
         if (potionPrefabs.Length == 0)
         {
             yield break;
         }
+
+        yield return null;
+
+        if (autoFitToScreen)
+        {
+            CalculateOptimalBoardTransform();
+            ApplyBoardTransform();
+        }
+        
+        yield return null;
 
         int potionsPlaced = 0;
         List<Vector2> potionPositions = new List<Vector2>();
@@ -614,20 +706,6 @@ public class PotionBoard : MonoBehaviour
             }
         }
         
-        if (potionPositions.Count > 1)
-        {
-            bool allSame = true;
-            Vector2 firstPos = potionPositions[0];
-            for (int i = 1; i < potionPositions.Count; i++)
-            {
-                if (Vector2.Distance(firstPos, potionPositions[i]) > 0.01f)
-                {
-                    allSame = false;
-                    break;
-                }
-            }
-        }
-
         int maxPasses = 10;
         int passCount = 0;
         bool hasMatches;
@@ -662,10 +740,8 @@ public class PotionBoard : MonoBehaviour
         }
         while (hasMatches);
         
-        PrintBoardState();
-        
-        Debug.Log("Board created successfully!");
-        isBoardInitialized = true; // ready for input
+        PrintBoardState();        
+        isBoardInitialized = true; 
         recursionCount = 0;
     }
 
@@ -848,7 +924,7 @@ public class PotionBoard : MonoBehaviour
             
         Potion currentPotion = potionBoard[x, y].potion.GetComponent<Potion>();
             
-        int hCount = 1; // current position
+        int hCount = 1;
         for (int i = x - 1; i >= 0; i--)
         {
             if (potionBoard[i, y] == null || !potionBoard[i, y].isUsable) break;
@@ -865,7 +941,6 @@ public class PotionBoard : MonoBehaviour
         }
         if (hCount >= 3)
         {
-            if (x == 1 && y >= 1 && y <= 5) Debug.Log($"🔍 H-Match detected: {hCount}x {type} at ({x},{y})");
             return true;
         }
 
@@ -894,7 +969,6 @@ public class PotionBoard : MonoBehaviour
 
     void VerifyNoMatches()
     {
-        bool foundMatch = false;
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -918,10 +992,6 @@ public class PotionBoard : MonoBehaviour
                     if (!CanMatch(p, neighbor)) break;
                     hCount++;
                 }
-                if (hCount >= 3)
-                {
-                    foundMatch = true;
-                }
                 
                 int vCount = 1;
                 for (int j = y - 1; j >= 0; j--)
@@ -937,10 +1007,6 @@ public class PotionBoard : MonoBehaviour
                     Potion neighbor = potionBoard[x, j].potion.GetComponent<Potion>();
                     if (!CanMatch(p, neighbor)) break;
                     vCount++;
-                }
-                if (vCount >= 3)
-                {
-                    foundMatch = true;
                 }
             }
         }
@@ -1314,7 +1380,6 @@ public class PotionBoard : MonoBehaviour
         }
         
         BTSCandyType specialType = candyDatabase.GetSpecialCandyForMatch(matchType);
-        
         Vector2 localPos = GetLocalPositionForCell(x, y);
         
         if (potionBoard[x, y] != null && potionBoard[x, y].potion != null)
@@ -1330,9 +1395,27 @@ public class PotionBoard : MonoBehaviour
         potionComponent.SetIndices(x, y);
         potionComponent.candyType = specialType;
         potionComponent.isSpecialCandy = true;
-        potionComponent.baseColor = originalType;        
-        ApplyCandySprite(specialCandy, originalType); 
-        potionComponent.UpdateVisualEffects();
+        potionComponent.baseColor = originalType;
+        if (specialType == BTSCandyType.ColorBomb || specialType == BTSCandyType.SuperBomb)
+        {
+            ApplyCandySprite(specialCandy, specialType);
+        }
+        else
+        {
+            ApplyCandySprite(specialCandy, originalType);
+        }
+        
+        Sprite balloonSprite = null;
+        if (specialType == BTSCandyType.Balloon)
+        {
+            BTSCandyData candyData = candyDatabase.GetCandyData(BTSCandyType.Balloon);
+            if (candyData != null)
+            {
+                balloonSprite = candyData.balloonSprite;
+            }
+        }
+        
+        potionComponent.UpdateVisualEffects(balloonSprite);
         
         potionBoard[x, y] = new Node(true, specialCandy);
         StartCoroutine(SpecialCandyCreationEffect(specialCandy));
@@ -1341,6 +1424,8 @@ public class PotionBoard : MonoBehaviour
     private IEnumerator SpecialCandyCreationEffect(GameObject candy)
     {
         if (candy == null) yield break;
+        
+        yield return null;
         
         Vector3 originalScale = candy.transform.localScale;
         float duration = 0.3f;
@@ -1470,16 +1555,6 @@ public class PotionBoard : MonoBehaviour
                             createSpecialCandy = true
                         };
                     }
-                    else if (totalCount == 5)
-                    {
-                        return new MatchResult
-                        {
-                            connectedPotions = extraConnectedPotions,
-                            direction = MatchDirection.Super,
-                            matchType = MatchType.Match5,
-                            createSpecialCandy = true
-                        };
-                    }
                     else
                     {
                         return new MatchResult
@@ -1514,16 +1589,6 @@ public class PotionBoard : MonoBehaviour
                             connectedPotions = extraConnectedPotions,
                             direction = MatchDirection.Super,
                             matchType = MatchType.Match6Plus,
-                            createSpecialCandy = true
-                        };
-                    }
-                    else if (totalCount == 5)
-                    {
-                        return new MatchResult
-                        {
-                            connectedPotions = extraConnectedPotions,
-                            direction = MatchDirection.Super,
-                            matchType = MatchType.Match5,
                             createSpecialCandy = true
                         };
                     }
@@ -1745,6 +1810,7 @@ public class PotionBoard : MonoBehaviour
 
             if (selectedPotion.isSpecialCandy && _potion.isSpecialCandy)
             {
+                isProcessingMove = true;
                 StartCoroutine(HandleSpecialCombo(selectedPotion, _potion));
                 selectedPotion = null;
                 HideSelectionIndicator();
@@ -1785,7 +1851,7 @@ public class PotionBoard : MonoBehaviour
             selectionIndicator.transform.localScale = indicatorOriginalScale;
             
             Vector3 pos = selectionIndicator.transform.localPosition;
-            pos.z = 0.1f; // Slightly behind candy
+            pos.z = 0.1f; 
             selectionIndicator.transform.localPosition = pos;
             
             SpriteRenderer indicatorSprite = selectionIndicator.GetComponent<SpriteRenderer>();
@@ -1937,7 +2003,7 @@ public class PotionBoard : MonoBehaviour
         {
             if (CheckBoard())
             {
-                StartCoroutine(ProcessTurnOnMatchedBoard(true));
+                yield return StartCoroutine(ProcessTurnOnMatchedBoard(true));
             }
             else
             {
@@ -1956,7 +2022,7 @@ public class PotionBoard : MonoBehaviour
 
             if (hasMatched)
             {
-                StartCoroutine(ProcessTurnOnMatchedBoard(true));
+                yield return StartCoroutine(ProcessTurnOnMatchedBoard(true));
             }
             else
             {
@@ -2004,15 +2070,44 @@ public class PotionBoard : MonoBehaviour
         
         if (specialCandy != null && regularCandy != null)
         {
-            if (specialCandy.baseColor == regularCandy.candyType)
+            if (specialCandy.candyType == BTSCandyType.ColorBomb)
             {
-                callback(false); 
+                yield return StartCoroutine(ActivateColorBombWithTarget(specialCandy, regularCandy));
+                callback(true);
+                yield break;
+            }
+            else if (specialCandy.candyType == BTSCandyType.SuperBomb)
+            {
+                yield return StartCoroutine(ActivateSuperBombWithTarget(specialCandy, regularCandy));
+                callback(true);
+                yield break;
+            }
+            else if (specialCandy.candyType == BTSCandyType.StripedHorizontal || 
+                     specialCandy.candyType == BTSCandyType.StripedVertical)
+            {
+                if (specialCandy.baseColor == regularCandy.candyType)
+                {
+                    yield return StartCoroutine(ActivateSpecialCandySequence(specialCandy));
+                    callback(true);
+                    yield break;
+                }
+                else
+                {
+                    callback(false); 
+                    yield break;
+                }
+            }
+            else if (specialCandy.candyType == BTSCandyType.Balloon)
+            {
+                callback(false);
+                yield break;
             }
             else
             {
-                callback(false);
+                yield return StartCoroutine(ActivateSpecialCandySequence(specialCandy));
+                callback(true);
+                yield break;
             }
-            yield break;
         }
         
         callback(false);
@@ -2268,7 +2363,7 @@ public class PotionBoard : MonoBehaviour
         yield return StartCoroutine(ActivateSpecialCandySequence(specialCandy));
         if (CheckBoard())
         {
-            StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            yield return StartCoroutine(ProcessTurnOnMatchedBoard(true));
         }
         else
         {
@@ -2283,7 +2378,6 @@ public class PotionBoard : MonoBehaviour
     {
         if (specialCandyManager == null)
         {
-            Debug.LogWarning("Special Candy Manager not assigned!");
             yield break;
         }
 
@@ -2336,7 +2430,9 @@ public class PotionBoard : MonoBehaviour
         
         yield return StartCoroutine(specialCandyManager.HandleSpecialCombo(
             special1.candyType, 
-            special2.candyType, 
+            special2.candyType,
+            special1.baseColor,
+            special2.baseColor,
             x, 
             y
         ));
@@ -2359,7 +2455,7 @@ public class PotionBoard : MonoBehaviour
         
         if (CheckBoard())
         {
-            StartCoroutine(ProcessTurnOnMatchedBoard(true));
+            yield return StartCoroutine(ProcessTurnOnMatchedBoard(true));
         }
         else
         {
@@ -2367,6 +2463,95 @@ public class PotionBoard : MonoBehaviour
             CheckForValidMoves();
             isProcessingMove = false;
         }
+    }
+
+    private IEnumerator ActivateColorBombWithTarget(Potion colorBomb, Potion targetCandy)
+    {
+        isProcessingMove = true;
+        BTSCandyType targetType = targetCandy.candyType;
+        
+        if (specialCandyManager != null)
+        {
+            yield return StartCoroutine(specialCandyManager.ActivateSpecialCandy(
+                BTSCandyType.ColorBomb, colorBomb.xIndex, colorBomb.yIndex));
+        }
+        Destroy(colorBomb.gameObject);
+        Destroy(targetCandy.gameObject);
+        potionBoard[colorBomb.xIndex, colorBomb.yIndex] = new Node(true, null);
+        potionBoard[targetCandy.xIndex, targetCandy.yIndex] = new Node(true, null);
+        List<Potion> candiesToClear = new();
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (potionBoard[x, y] != null && potionBoard[x, y].isUsable && potionBoard[x, y].potion != null)
+                {
+                    Potion potion = potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion != null && potion.candyType == targetType)
+                    {
+                        candiesToClear.Add(potion);
+                        potion.isMatched = true;
+                    }
+                }
+            }
+        }
+        
+        if (candiesToClear.Count > 0)
+        {
+            int clearedCount = RemoveAndRefill(candiesToClear);
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.ProcessTurn(clearedCount, false);
+            }
+        }
+        
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    private IEnumerator ActivateSuperBombWithTarget(Potion superBomb, Potion targetCandy)
+    {        
+        isProcessingMove = true;
+        
+        if (specialCandyManager != null)
+        {
+            yield return StartCoroutine(specialCandyManager.ActivateSpecialCandy(
+                BTSCandyType.SuperBomb, superBomb.xIndex, superBomb.yIndex));
+        }
+        
+        Destroy(superBomb.gameObject);
+        Destroy(targetCandy.gameObject);
+        potionBoard[superBomb.xIndex, superBomb.yIndex] = new Node(true, null);
+        potionBoard[targetCandy.xIndex, targetCandy.yIndex] = new Node(true, null);
+        
+        List<Potion> candiesToClear = new();
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (potionBoard[x, y] != null && potionBoard[x, y].isUsable && potionBoard[x, y].potion != null)
+                {
+                    Potion potion = potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion != null && !potion.isSpecialCandy)
+                    {
+                        candiesToClear.Add(potion);
+                        potion.isMatched = true;
+                    }
+                }
+            }
+        }
+        
+        
+        // Remove and refill
+        if (candiesToClear.Count > 0)
+        {
+            int clearedCount = RemoveAndRefill(candiesToClear);
+            if (GameManager.instance != null)
+            {
+                GameManager.instance.ProcessTurn(clearedCount, false);
+            }
+        }
+        
+        yield return new WaitForSeconds(0.5f);
     }
 
     public void ClearCandyAt(int x, int y)
@@ -2383,6 +2568,25 @@ public class PotionBoard : MonoBehaviour
                 potion.isMatched = true;
             }
         }
+    }
+    
+    public bool AnyPotionsMoving()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (potionBoard[x, y] != null && potionBoard[x, y].isUsable && potionBoard[x, y].potion != null)
+                {
+                    Potion potion = potionBoard[x, y].potion.GetComponent<Potion>();
+                    if (potion != null && potion.isMoving)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
     
     #endregion
