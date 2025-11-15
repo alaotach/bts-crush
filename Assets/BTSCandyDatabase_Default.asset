@@ -16,304 +16,161 @@ MonoBehaviour:
   - candyType: 0
     sprite: {fileID: -1435308251843122083, guid: 0f33820e2da776a17b5fab1ae986f313, type: 3}
     displayName: RM
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 1
     sprite: {fileID: -7555898099169723030, guid: 660c324b2415212739141f2f304c18e2, type: 3}
     displayName: Jin
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 2
     sprite: {fileID: -2885286689410649393, guid: afa692097c329b1ba8b6cd7c7709d6d0, type: 3}
     displayName: Suga
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 3
     sprite: {fileID: 8632750477440248104, guid: 844460f3c63393fc2a225d016002cf24, type: 3}
     displayName: JHope
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 4
     sprite: {fileID: -3782424944344533512, guid: 51805df40d0f1794ead0e00f9bff1535, type: 3}
     displayName: Jimin
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 5
     sprite: {fileID: -4534634967793127557, guid: a9558c6df93f71eacad53ba85ea8c3be, type: 3}
     displayName: V
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 6
     sprite: {fileID: -7686040153328351709, guid: 5411b0487c8d3746382f4fc120c857c3, type: 3}
     displayName: Jungkook
-    description: BTS Member Chibi
     isSpecial: 0
-    createdFrom: 0
     scoreValue: 10
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 7
     sprite: {fileID: 3167858272290404328, guid: 4b30951106e4d2d12a9de8f3764c111d, type: 3}
     displayName: MicCandy
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 8
     sprite: {fileID: 435614823660369868, guid: c49e9ada8d9bbd925a8cae475a7a52a9, type: 3}
     displayName: Lightstick
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 9
     sprite: {fileID: -4691901745886693196, guid: 006ab9d5cbbcb34eb8d49559935781a7, type: 3}
     displayName: AlbumBomb
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: -958123961460713576, guid: 07ef5e2aa95b1c0f9bfa756d0183d8a8, type: 3}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 10
-    sprite: {fileID: -946211272428317021, guid: 052e926a6f56eea21830124a1e97c7d2, type: 3}
+    sprite: {fileID: 6630341104690361922, guid: e543818fc401562a1a99d9c5e1922d4f, type: 3}
     displayName: StageBomb
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 6630341104690361922, guid: e543818fc401562a1a99d9c5e1922d4f, type: 3}
+    superBombSprite: {fileID: 0}
   - candyType: 11
-    sprite: {fileID: 6249436322557117659, guid: bed1bf0cef04fea4bb27a1203a86d1df, type: 3}
+    sprite: {fileID: -3687034786542532684, guid: 7a3427d4a2e37d23d864702aef4d2aba, type: 3}
     displayName: FanHeartBomb
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: -3687034786542532684, guid: 7a3427d4a2e37d23d864702aef4d2aba, type: 3}
   - candyType: 12
     sprite: {fileID: 6630341104690361922, guid: e543818fc401562a1a99d9c5e1922d4f, type: 3}
     displayName: DynamiteCandy
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 13
     sprite: {fileID: -8105167920959818709, guid: 0e75362ee896b1c3f95537e321d4fe93, type: 3}
     displayName: ButterSlide
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 14
     sprite: {fileID: -3687034786542532684, guid: 7a3427d4a2e37d23d864702aef4d2aba, type: 3}
     displayName: FanChant
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
   - candyType: 15
     sprite: {fileID: -5831566861781624205, guid: 843acb3379ba6bb4ba11285d6b73c9e8, type: 3}
     displayName: SugaRap
-    description: Special Candy
     isSpecial: 1
-    createdFrom: 0
     scoreValue: 50
-    explosionEffect: {fileID: 0}
-    activationSound: {fileID: 0}
-    clearPattern: 0
-    clearRadius: 1
-    clearsAllOfColor: 0
-    animationDuration: 0.5
-    scaleCurve:
-      serializedVersion: 2
-      m_Curve: []
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
+    horizontalStripedSprite: {fileID: 0}
+    verticalStripedSprite: {fileID: 0}
+    balloonSprite: {fileID: 0}
+    colorBombSprite: {fileID: 0}
+    superBombSprite: {fileID: 0}
+  activeMemberCount: 5

@@ -1,0 +1,35 @@
+{
+  "buildFiles": [
+    "/home/aloo/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/CMakeLists.txt",
+    "/home/aloo/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/FramePacing/CMakeLists.txt",
+    "/home/aloo/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/GameActivity/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/aloo/Unity/Hub/Editor/6000.2.7f2/Editor/Data/PlaybackEngines/AndroidPlayer/SDK/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/aloo/My project/.utmp/RelWithDebInfo/6e3t5b4r/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/aloo/Unity/Hub/Editor/6000.2.7f2/Editor/Data/PlaybackEngines/AndroidPlayer/SDK/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/aloo/My project/.utmp/RelWithDebInfo/6e3t5b4r/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "game::@d02bb112ea9f9c2ed29f": {
+      "artifactName": "game",
+      "abi": "arm64-v8a",
+      "output": "/home/aloo/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/6e3t5b4r/obj/arm64-v8a/libgame.so",
+      "runtimeFiles": []
+    },
+    "swappywrapper::@7e25bd1f32ce224db4e9": {
+      "artifactName": "swappywrapper",
+      "abi": "arm64-v8a",
+      "output": "/home/aloo/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/6e3t5b4r/obj/arm64-v8a/libswappywrapper.so",
+      "runtimeFiles": []
+    }
+  }
+}

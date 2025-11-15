@@ -725,6 +725,8 @@ GameObject:
   - component: {fileID: 1839198396}
   - component: {fileID: 1839198395}
   - component: {fileID: 1839198394}
+  - component: {fileID: 1839198398}
+  - component: {fileID: 1839198399}
   m_Layer: 5
   m_Name: UI
   m_TagString: Untagged
@@ -816,6 +818,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1839198398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839198393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 767d0d1adc2bffaa295fdce3503f60ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
+  playButton: {fileID: 1634396662}
+  settingsButton: {fileID: 0}
+  quitButton: {fileID: 0}
+  levelSelectSceneName: LevelSelect
+--- !u!114 &1839198399
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839198393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 329eeed5311351f23bb5294abf278943, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResponsiveCanvasSetup
+  referenceResolution: {x: 480, y: 848}
+  matchWidthOrHeight: 0.5
+  targetOrientation: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
