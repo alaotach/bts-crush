@@ -3,6 +3,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "BTSCandyDatabase", menuName = "ScriptableObjects/BTS Candy Database", order = 1)]
 public class BTSCandyDatabase : ScriptableObject
 {
+    public BTSAssetManager assetManager;
+    
     public BTSCandyData[] candies;
     public int activeMemberCount = 5;
     

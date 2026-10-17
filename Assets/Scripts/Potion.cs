@@ -16,6 +16,28 @@ public class Potion : MonoBehaviour
     public bool isMoving = false;
     
     private SpecialCandyVisualizer visualizer;
+    private TileAnimator tileAnimator;
+
+    public void Awake()
+    {
+        tileAnimator = gameObject.AddComponent<TileAnimator>();
+    }
+
+    public void OnSelect()
+    {
+        if (tileAnimator != null) tileAnimator.StartSelectedAnimation();
+    }
+
+    public void OnDeselect()
+    {
+        if (tileAnimator != null) tileAnimator.StartIdleAnimation();
+    }
+
+    public void OnMatch(System.Action onComplete = null)
+    {
+        if (tileAnimator != null) tileAnimator.StartMatchAnimation(onComplete);
+        else onComplete?.Invoke();
+    }
 
     public Potion(int _x, int _y)
     {
