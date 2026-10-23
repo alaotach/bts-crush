@@ -60,6 +60,10 @@ export interface SaveData {
   achievements: AchievementData;
   lastDailyChallenge?: string; // ISO date
   dailyChallengeScore?: number;
+  // Daily login bonus tracking
+  lastLoginDate?: string; // ISO date
+  loginStreak?: number;
+  loginBonusClaimedToday?: boolean;
 }
 
 const SAVE_KEY = '@bts_crush_save';
@@ -94,6 +98,10 @@ function getDefaultSave(): SaveData {
     settings: { ...DEFAULT_SETTINGS },
     stats: { ...DEFAULT_STATS },
     achievements: {},
+    // Daily login bonus tracking - initializing to undefined so we can detect first login
+    lastLoginDate: undefined,
+    loginStreak: undefined,
+    loginBonusClaimedToday: undefined,
   };
 }
 
@@ -188,6 +196,87 @@ export class SaveManager {
       };
       await this.save();
     }
+  }
+
+  /**
+   * Check if the player has logged in today
+   * @returns true if last login was today, false otherwise
+   */
+  async hasLoggedInToday(): Promise<boolean> {
+    if (!this.data.lastLoginDate) {
+      return false;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const lastLogin = new Date(this.data.lastLoginDate).toISOString().split('T')[0];
+
+    return today === lastLogin;
+  }
+
+  /**
+   * Update login streak and handle login bonus
+   * @returns login bonus reward (coins) if available, 0 otherwise
+   */
+  async updateLoginStreak(): Promise<number> {
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!this.data.lastLoginDate) {
+      // First login ever
+      this.data.lastLoginDate = new Date().toISOString();
+      this.data.loginStreak = 1;
+      this.data.loginBonusClaimedToday = false;
+    } else {
+      const lastLogin = new Date(this.data.lastLoginDate).toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      if (lastLogin === today) {
+        // Already logged in today
+        if (!this.data.loginBonusClaimedToday) {
+          // Bonus available to claim
+          this.data.loginBonusClaimedToday = true;
+          await this.save();
+          return this.calculateLoginBonus(this.data.loginStreak || 0);
+        }
+        return 0; // Already claimed bonus today
+      } else if (lastLogin === yesterday) {
+        // Consecutive day
+        this.data.loginStreak = (this.data.loginStreak || 0) + 1;
+      } else {
+        // Streak broken
+        this.data.loginStreak = 1;
+      }
+
+      this.data.lastLoginDate = new Date().toISOString();
+      this.data.loginBonusClaimedToday = false;
+    }
+
+    await this.save();
+    return 0; // Will be able to claim bonus after update
+  }
+
+  /**
+   * Claim the login bonus for today
+   * @returns bonus coins awarded
+   */
+  async claimLoginBonus(): Promise<number> {
+    if (await this.hasLoggedInToday() && !(this.data.loginBonusClaimedToday || false)) {
+      this.data.loginBonusClaimedToday = true;
+      await this.save();
+      return this.calculateLoginBonus(this.data.loginStreak || 0);
+    }
+    return 0;
+  }
+
+  /**
+   * Calculate login bonus based on streak
+   * @param streak login streak count
+   * @returns bonus coins
+   */
+  private calculateLoginBonus(streak: number): number {
+    // Base bonus increases with streak, capped at 7 days (weekly bonus)
+    const cappedStreak = Math.min(streak, 7);
+    // Login bonus: 50 + (streak-1)*10, max 110 for 7-day streak
+    return 50 + (cappedStreak - 1) * 10;
   }
 
   async resetAll(): Promise<void> {

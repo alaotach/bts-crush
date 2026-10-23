@@ -11,7 +11,11 @@ import { ObstacleSystem } from './ObstacleSystem';
 import { ObjectiveSystem } from './ObjectiveSystem';
 import { GameState, GameStateData } from './GameState';
 import { LevelDefinition, parseCellLayout } from '../levels/LevelDefinition';
-import { ALL_MEMBERS } from './Tile';
+import { ALL_MEMBERS, MemberType } from './Tile';
+import { MemberAbilitySystem } from './MemberAbilitySystem';
+import { MemberAbilityResult } from './MemberAbilitySystem';
+import { getMemberConfig } from '../bts/members';
+import { ClubSystem } from './ClubSystem';
 
 export class GameEngine {
   private board: Board;
@@ -24,9 +28,14 @@ export class GameEngine {
   private combinationSystem: CombinationSystem;
   private obstacleSystem: ObstacleSystem;
   private objectiveSystem: ObjectiveSystem;
-  
+  private memberAbilitySystem: MemberAbilitySystem;
+
   private state!: GameState;
   private levelDef!: LevelDefinition;
+
+  // Track member states for XP and abilities
+  private memberStates: Record<string, any> = {};
+  private clubSystem: ClubSystem;
 
   constructor() {
     this.board = new Board(0, 0); // Placeholder, will be re-initialized
@@ -39,6 +48,42 @@ export class GameEngine {
     this.combinationSystem = new CombinationSystem(this.specialSystem);
     this.obstacleSystem = new ObstacleSystem();
     this.objectiveSystem = new ObjectiveSystem([]);
+    this.memberAbilitySystem = new MemberAbilitySystem(this.specialSystem);
+    this.clubSystem = ClubSystem.getInstance();
+
+    // Initialize member states for all members
+    ALL_MEMBERS.forEach(memberId => {
+      this.memberStates[memberId] = { uniqueAbilityCooldownRemaining: 0 };
+    });
+  }
+
+  // Award XP to a member and check for level up
+  private awardMemberXP(memberId: string, xpAmount: number): void {
+    if (!this.memberStates[memberId]) return;
+
+    const state = this.memberStates[memberId];
+    state.xp += xpAmount;
+
+    // Update club contribution for XP earned
+    this.clubSystem.updateContribution('xpEarned', xpAmount);
+
+    // Check for level up
+    const config = getMemberConfig(memberId as MemberType);
+    const xpForNextLevel = this.getXPForNextLevel(state.level, config.baseXPRequired, config.xpGrowthFactor);
+    if (state.xp >= xpForNextLevel) {
+      state.level++;
+      state.xp = state.xp - xpForNextLevel; // Carry over excess XP
+      state.xpForNextLevel = this.getXPForNextLevel(state.level, config.baseXPRequired, config.xpGrowthFactor);
+
+      // Trigger level up effect (could add visual/audio feedback here)
+      console.log(`Member ${memberId} leveled up to ${state.level}!`);
+    }
+  }
+
+  // Helper to calculate XP for next level
+  private getXPForNextLevel(level: number, baseXP: number, growthFactor: number): number {
+    if (level < 1) return baseXP;
+    return Math.floor(baseXP * Math.pow(growthFactor, level - 1));
   }
 
   initLevel(levelDef: LevelDefinition): void {
@@ -65,6 +110,23 @@ export class GameEngine {
     
     this.objectiveSystem = new ObjectiveSystem(levelDef.objectives);
 
+    // Initialize member states with XP system
+    const memberStates: Record<string, any> = {};
+    const membersToInitialize = levelDef.availableMembers && levelDef.availableMembers.length > 0
+      ? levelDef.availableMembers
+      : ALL_MEMBERS;
+
+    membersToInitialize.forEach(memberId => {
+      const config = getMemberConfig(memberId as MemberType);
+      memberStates[memberId] = {
+        level: 1,
+        xp: 0,
+        xpForNextLevel: this.getXPForNextLevel(1, config.baseXPRequired, config.xpGrowthFactor),
+        isUnlocked: true,
+        uniqueAbilityCooldownRemaining: 0
+      };
+    });
+
     this.state = new GameState({
       board: this.board,
       phase: GamePhase.IDLE,
@@ -83,6 +145,9 @@ export class GameEngine {
       comboFeedback: null,
       levelId: levelDef.id
     });
+
+    // Store member states in engine for ability system
+    this.memberStates = memberStates;
   }
 
   trySwap(x1: number, y1: number, x2: number, y2: number): boolean {
@@ -90,6 +155,13 @@ export class GameEngine {
     if (Math.abs(x1 - x2) + Math.abs(y1 - y2) !== 1) return false;
     if (!this.board.isPlayableCell(x1, y1) || !this.board.isPlayableCell(x2, y2)) return false;
 
+    // Get members involved in the swap
+    const tile1 = this.board.getTile(x1, y1);
+    const tile2 = this.board.getTile(x2, y2);
+    const member1 = tile1?.member ?? null;
+    const member2 = tile2?.member ?? null;
+
+    // Check if combination swap
     if (this.combinationSystem.isCombination(this.board, x1, y1, x2, y2)) {
       this.state.movesRemaining--;
       this.state.phase = GamePhase.MATCHING;
@@ -98,7 +170,17 @@ export class GameEngine {
       this.scoreSystem.addScore(res.scoreBonus);
       this.state.score = this.scoreSystem.score;
       this.objectiveSystem.onScoreChanged(this.state.score);
+      // Update club contribution for score and matches
+      this.clubSystem.updateContribution('score', res.scoreBonus);
+      // Approximate match count for combination - could be refined based on actual tiles affected
+      const matchCount = Math.ceil(res.affectedTiles.length / 3); // Rough estimate
+      this.clubSystem.updateContribution('matches', matchCount);
       this.state.phase = GamePhase.CLEARING;
+
+      // Award XP to members involved in combination
+      if (member1) this.awardMemberXP(member1, 5);
+      if (member2 && member2 !== member1) this.awardMemberXP(member2, 5);
+
       this.afterClearing();
       return true;
     }
@@ -115,6 +197,11 @@ export class GameEngine {
 
     this.state.movesRemaining--;
     this.state.phase = GamePhase.MATCHING;
+
+    // Award XP to members involved in regular match
+    if (member1) this.awardMemberXP(member1, 3);
+    if (member2 && member2 !== member1) this.awardMemberXP(member2, 3);
+
     this.resolveMatches();
     return true;
   }
@@ -130,7 +217,8 @@ export class GameEngine {
 
     // If album bomb was swapped with a normal tile, trySwap would have placed it here?
     // Wait, trySwap handles combinations, but album_bomb + normal tile is a special case.
-    
+
+    let specialsCreated = 0;
     for (const match of matches) {
       const specialType = this.specialSystem.getSpecialForMatch(match);
       if (specialType) {
@@ -138,6 +226,7 @@ export class GameEngine {
         const newSpecial = this.specialSystem.createSpecialTile(t.x, t.y, match.member, specialType);
         this.board.setTile(t.x, t.y, newSpecial);
         this.objectiveSystem.onSpecialCreated(specialType);
+        specialsCreated++;
       }
 
       for (const t of match.tiles) {
@@ -149,6 +238,9 @@ export class GameEngine {
         positionsToClear.add(`${t.x},${t.y}`);
       }
     }
+
+    // Update club contribution for specials created
+    this.clubSystem.updateContribution('specialsCreated', specialsCreated);
 
     // Process activation queue (cascading specials)
     while (activationQueue.length > 0) {
@@ -179,6 +271,8 @@ export class GameEngine {
 
     const obsRes = this.obstacleSystem.processAdjacentMatch(this.board, arrPositions);
     scoreGained += obsRes.scoreBonus;
+    // Update club contribution for obstacles destroyed
+    this.clubSystem.updateContribution('specialsCreated', obsRes.destroyed.length); // Using specialsCreated as a proxy for now
     for (const d of obsRes.destroyed) {
       this.objectiveSystem.onObstacleDestroyed(d.type);
     }
@@ -196,9 +290,15 @@ export class GameEngine {
     }
 
     this.objectiveSystem.onTilesCleared(clearedTiles as any);
-    this.scoreSystem.addScore(scoreGained + matches.length * 100); 
+    const scoreAdded = scoreGained + matches.length * 100;
+    this.scoreSystem.addScore(scoreAdded);
     this.state.score = this.scoreSystem.score;
     this.objectiveSystem.onScoreChanged(this.state.score);
+    // Update club contribution for score and matches
+    this.clubSystem.updateContribution('score', scoreAdded);
+    this.clubSystem.updateContribution('matches', matches.length);
+    // Update club contribution for score
+    this.clubSystem.updateContribution('score', scoreAdded);
     this.state.lastMatchedPositions = arrPositions;
     this.state.phase = GamePhase.CLEARING;
     this.afterClearing();
@@ -228,6 +328,8 @@ export class GameEngine {
       
       if (this.objectiveSystem.isAllCompleted()) {
         this.state.phase = GamePhase.LEVEL_COMPLETE;
+        // Update club contribution for level completed
+        this.clubSystem.updateContribution('levelsCompleted', 1);
       } else if (this.state.movesRemaining <= 0) {
         this.state.phase = GamePhase.LEVEL_FAILED;
       } else if (!this.matchDetector.hasAnyValidMove(this.board)) {
@@ -237,7 +339,98 @@ export class GameEngine {
       } else {
         this.state.phase = GamePhase.IDLE;
       }
+
+      // Update member ability cooldowns after each move/cascade sequence
+      this.memberAbilitySystem.updateCooldowns(this.memberStates);
+
+      // Check for ability activation opportunities (e.g., after significant cascades)
+      if (this.state.cascadeCount >= 2) {
+        this.checkForAbilityActivation();
+      }
     }
+  }
+
+  /**
+   * Check if any member's ability should activate based on game state
+   */
+  private checkForAbilityActivation(): void {
+    // For now, activate the highest level member's ability that's ready
+    // In a full implementation, this would be triggered by player action
+    let highestLevelMember: string | null = null;
+    let highestLevel = 0;
+
+    for (const memberId in this.memberStates) {
+      const state = this.memberStates[memberId];
+      if (state.level > highestLevel) {
+        highestLevel = state.level;
+        highestLevelMember = memberId;
+      }
+    }
+
+    if (highestLevelMember && this.memberAbilitySystem.isAbilityReady(this.memberStates[highestLevelMember])) {
+      // Activate the ability
+      const result = this.memberAbilitySystem.useAbility(this.board, highestLevelMember, this.memberStates[highestLevelMember]);
+      if (result) {
+        // Apply ability effects
+        this.applyAbilityResult(result, highestLevelMember);
+
+        // Add score from ability
+        this.scoreSystem.addScore(result.scoreBonus);
+        this.state.score = this.scoreSystem.score;
+        this.objectiveSystem.onScoreChanged(this.state.score);
+        // Update club contribution for score from ability
+        this.clubSystem.updateContribution('score', result.scoreBonus);
+
+        console.log(`Member ${highestLevelMember}'s ability activated: ${result.description}`);
+      }
+    }
+  }
+
+  /**
+   * Apply the results of an ability activation to the game board
+   */
+  private applyAbilityResult(result: MemberAbilityResult, memberId: string): void {
+    // Clear affected tiles
+    for (const pos of result.affectedTiles) {
+      this.board.setTile(pos.x, pos.y, null);
+    }
+
+    // Create special tiles from ability result
+    for (const special of result.specialsCreated) {
+      // Create the special tile based on type
+      let specialTile = null;
+      switch (special.type) {
+        case 'mic_horizontal':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'mic_horizontal');
+          break;
+        case 'mic_vertical':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'mic_vertical');
+          break;
+        case 'album_bomb':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'album_bomb');
+          break;
+        case 'fan_heart':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'fan_heart');
+          break;
+        case 'chibi':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'chibi');
+          break;
+        case 'dynamite':
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'dynamite');
+          break;
+        default:
+          // Default to a horizontal mic for unknown types
+          specialTile = this.specialSystem.createSpecialTile(special.x, special.y, memberId as MemberType, 'mic_horizontal');
+          break;
+      }
+
+      if (specialTile) {
+        this.board.setTile(special.x, special.y, specialTile);
+      }
+    }
+
+    // Update club contribution for specials created by abilities
+    this.clubSystem.updateContribution('specialsCreated', result.specialsCreated.length);
   }
 
   getState(): GameStateData {
